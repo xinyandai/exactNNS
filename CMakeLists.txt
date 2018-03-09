@@ -25,4 +25,4 @@ ELSE()
 ENDIF()
 
 
-add_executable(exactNNS main.cpp )
+add_executable(exactNNS main.cpp include/kmeans.h)
