@@ -1,3 +1,9 @@
+//
+// author: developed by Xinyan Dai
+// date: Mar 9 2018
+// based on: https://github.com/marcoscastro/kmeans/blob/master/kmeans.cpp
+//
+
 #pragma once
 
 #include <iostream>
@@ -6,19 +12,22 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <random>
 
-#define DEFAULT_CLUSTER_ID -1
+#define DEFAULT_CLUSTER_ID (-1)
 using namespace std;
 
 class Point
 {
+
 protected:
-    int point_id_;
+    const int point_id_;
+
     int cluster_id_;
-    vector<double> values_;
+    const double * const values_;
 
 public:
-    Point(int id_point, vector<double>& values)
+    Point(int id_point, const double * const  values)
             : point_id_(id_point),  values_(values), cluster_id_(DEFAULT_CLUSTER_ID) {}
 
     void setCluster(int id_cluster) {
@@ -37,11 +46,9 @@ public:
         return values_[index];
     }
 
-    int getDimension() const {
-        return (int)values_.size();
-    }
 
-    const vector<double > &  getValues() const {
+
+    const const double * const  getValues() const {
         return values_;
     }
 };
@@ -55,8 +62,14 @@ protected:
     vector<Point> points_;
 
 public:
-    Cluster(int id_cluster, const Point& point)
-            : cluster_id_(id_cluster), central_values_(point.getValues()), points_(1, point) {}
+    Cluster(int id_cluster, const Point& point, size_t dimension)
+            : cluster_id_(id_cluster), points_(1, point) {
+
+        central_values_.reserve(dimension);
+        for (size_t i = 0; i < dimension; ++i) {
+            central_values_.push_back(point.getValues()[dimension]);
+        }
+    }
 
     void addPoint(const Point& point) {
         points_.push_back(point);
@@ -105,7 +118,7 @@ class KMeans
 {
 protected:
     int K_; // number of clusters
-    int dimension_;
+    size_t dimension_;
     int num_points_;
     int max_iterations_;
     vector<Cluster> clusters_;
@@ -115,7 +128,7 @@ protected:
      * @param point
      * @return
      */
-    int getIDNearestCenter(Point point, std::function) {
+    int getIDNearestCenter(Point point) {
         double sum = 0.0;
         double min_dist;
         int id_cluster_center = 0;
@@ -151,19 +164,23 @@ protected:
      * @param points
      * @param prohibited_indexes
      */
-    void initialCenters(vector<Point> & points, vector<int>& prohibited_indexes) {
+    void initialCenters(vector<Point> & points, vector<size_t >& prohibited_indexes) {
+
+        std::default_random_engine random_engine;
 
         for(int i = 0; i < K_; i++) {
 
             while(true) {
 
-                int index_point = rand() % num_points_;
+                size_t index_point = random_engine() % num_points_;
 
                 if(find(prohibited_indexes.begin(), prohibited_indexes.end(),
                         index_point) == prohibited_indexes.end()) {
+
                     prohibited_indexes.push_back(index_point);
                     points[index_point].setCluster(i);
-                    Cluster cluster(i, points[index_point]);
+
+                    Cluster cluster(i, points[index_point], dimension_);
                     clusters_.push_back(cluster);
                     break;
                 }
@@ -248,7 +265,7 @@ protected:
 
 
 public:
-    KMeans(int K, int num_points, int dimension, int max_iterations)
+    KMeans(int K, int num_points, size_t dimension, int max_iterations)
             : K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations) {}
 
     void run(vector<Point> & points) {
@@ -260,7 +277,7 @@ public:
         }
 
         // initial center
-        vector<int> prohibited_indexes;
+        vector<size_t > prohibited_indexes;
         initialCenters(points, prohibited_indexes);
 
 
@@ -279,4 +296,5 @@ public:
         }
 
     }
+
 };
