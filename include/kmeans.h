@@ -21,14 +21,20 @@ class Point
 {
 
 protected:
-    const int point_id_;
 
     int cluster_id_;
-    const double * const values_;
+
+    int point_id_;
+
+    /**
+     * one line of data : vector
+     */
+    const double * values_;
 
 public:
-    Point(int id_point, const double * const  values)
+    Point(int id_point, const double *  values)
             : point_id_(id_point),  values_(values), cluster_id_(DEFAULT_CLUSTER_ID) {}
+
 
     void setCluster(int id_cluster) {
         this->cluster_id_ = id_cluster;
@@ -46,9 +52,7 @@ public:
         return values_[index];
     }
 
-
-
-    const const double * const  getValues() const {
+    const double * const  getValues() const {
         return values_;
     }
 };
@@ -56,6 +60,7 @@ public:
 
 class Cluster
 {
+
 protected:
     int cluster_id_;
     vector<double> central_values_;
@@ -111,6 +116,7 @@ public:
     int getID() const {
         return cluster_id_;
     }
+
 };
 
 
@@ -236,6 +242,7 @@ protected:
 
         return done;
     }
+
     /**
      * shows elements of clusters
      */
@@ -293,7 +300,10 @@ public:
             // The centroid of each of the k clusters becomes the new mean.
             recenter();
 
+            showClusters();
         }
+
+        showClusters();
 
     }
 

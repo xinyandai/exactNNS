@@ -15,10 +15,10 @@ using std::function;
 using std::priority_queue;
 
 template<typename DataT>
-DataT vector_product(<vector<DataT > > array) {
+DataT vector_product(const vector<DataT > & data_vector) {
     DataT point_size = 1;
-    for (int i = 0; i < array.size(); ++i) {
-        point_size *= array[i];
+    for (size_t i = 0; i < data_vector.size(); ++i) {
+        point_size *= data_vector[i];
     }
     return point_size;
 }
