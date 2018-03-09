@@ -14,6 +14,15 @@ using std::pair;
 using std::function;
 using std::priority_queue;
 
+template<typename DataT>
+DataT vector_product(<vector<DataT > > array) {
+    DataT point_size = 1;
+    for (int i = 0; i < array.size(); ++i) {
+        point_size *= array[i];
+    }
+    return point_size;
+}
+
 // stands for inverted multi index
 class IMISequence{
 public:
@@ -25,21 +34,66 @@ public:
             :  _dimension(dimension), _lengths(lengths) {
 
         distor_ = func;
-        enHeap(vector<unsigned >(dimension, 0));
+        enHeap(vector<unsigned >(_dimension, 0));
 
-        unsigned point_size = 1;
-        for (int i = 0; i < _dimension; ++i) {
-            point_size *= _lengths[i];
-        }
-        visited_ = vector<bool >(point_size, false);
-//        visited_[0] = true;
-//  only the first element visited
+        visited_ = vector<bool >(vector_product(_lengths), false);
+
     }
 
     bool hasNext() const {
         return !minHeap_.empty();
     }
 
+
+    /**
+     * time complexity O(_dimension*_dimension*_dimension)
+     * @return
+     */
+    pair<float, Coord > next() {
+
+        const Coord nearestInHeap = minHeap_.top().data();
+        float dist = minHeap_.top().dist();
+        minHeap_.pop();
+
+        visited_[position(nearestInHeap)] = true;
+
+        for (int i = 0; i < _dimension; ++i) {
+            // check the next element in (i+1)'th dimension
+            unsigned newIndex = nearestInHeap[i] + 1;
+
+            if(newIndex  < _lengths[i]) { // next element exists
+
+                Coord nextEnHeap = nearestInHeap;
+                nextEnHeap[i] = newIndex;
+
+                if (shouldEnHeap(nextEnHeap)) {
+                    enHeap(nextEnHeap);
+                }
+            }
+        }
+
+        return std::make_pair(dist, nearestInHeap);
+    }
+
+protected:
+    // dist stores float value, data stores the index in the given leftVec or rightVec;
+
+    unsigned  _dimension;
+    vector<unsigned> _lengths;
+
+    vector<bool > visited_;
+    function<float (Coord)> distor_;
+    priority_queue<DistDataMin<Coord>> minHeap_;
+
+    void enHeap(const Coord& coord) {
+        float dist = distor_(coord);
+        minHeap_.emplace(DistDataMin<Coord>(dist, coord));
+    }
+
+    /***
+     * @param coord
+     * @return position in visited_ array
+     */
     inline unsigned position(const Coord &coord) {
         unsigned index = coord[0];
         for (int i = 1; i < _dimension; ++i) {
@@ -79,48 +133,6 @@ public:
         return true;
     }
 
-    /**
-     * time complexity O(_dimension*_dimension*_dimension)
-     * @return
-     */
-    pair<float, Coord > next() {
-        const Coord p = minHeap_.top().data();
-
-        float dist = minHeap_.top().dist();
-        minHeap_.pop();
-
-        visited_[position(p)] = true;
-
-        for (int i = 0; i < _dimension; ++i) {
-            // check the next element in (i+1)'th dimension
-            unsigned newIndex = p[i] + 1;
-
-            if(newIndex  < _lengths[i]) { // next element exists
-
-                Coord nextEnHeap = p;
-                nextEnHeap[i] = newIndex;
-                if (shouldEnHeap(nextEnHeap)) {
-                    enHeap(nextEnHeap);
-                }
-            }
-        }
-
-        return std::make_pair(dist, p);
-    }
-private:
-    // dist stores float value, data stores the index in the given leftVec or rightVec;
-
-    unsigned  _dimension;
-    vector<unsigned> _lengths;
-
-    vector<bool > visited_;
-    function<float (Coord)> distor_;
-    priority_queue<DistDataMin<Coord>> minHeap_;
-
-    void enHeap(const Coord& coord) {
-        float dist = distor_(coord);
-        minHeap_.emplace(DistDataMin<Coord>(dist, coord));
-    }
 };
 
 

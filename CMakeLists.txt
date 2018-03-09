@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(exact_imi)
+project(exactNNS)
 
 IF(WIN32)
     IF(CMAKE_CL_64)
@@ -25,4 +25,4 @@ ELSE()
 ENDIF()
 
 
-add_executable(exact_imi main.cpp include/imisequence.h include/imisequence_old.h)
+add_executable(exactNNS main.cpp )
