@@ -35,6 +35,7 @@ public:
     Point(int id_point, const double *  values)
             : point_id_(id_point),  values_(values), cluster_id_(DEFAULT_CLUSTER_ID) {}
 
+    Point(const Point& p): point_id_(p.point_id_), values_(p.values_), cluster_id_(p.cluster_id_) {}
 
     void setCluster(int id_cluster) {
         this->cluster_id_ = id_cluster;
