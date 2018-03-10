@@ -12,20 +12,15 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
-#include <random>
 
 #define DEFAULT_CLUSTER_ID (-1)
 using namespace std;
 
 class Point
 {
-
 protected:
-
     int cluster_id_;
-
     int point_id_;
-
     /**
      * one line of data : vector
      */
@@ -73,7 +68,7 @@ public:
 
         central_values_.reserve(dimension);
         for (size_t i = 0; i < dimension; ++i) {
-            central_values_.push_back(point.getValues()[dimension]);
+            central_values_.push_back(point.getValues()[i]);
         }
     }
 
@@ -124,10 +119,10 @@ public:
 class KMeans
 {
 protected:
-    int K_; // number of clusters
+    size_t K_; // number of clusters
     size_t dimension_;
-    int num_points_;
-    int max_iterations_;
+    size_t num_points_;
+    size_t max_iterations_;
     vector<Cluster> clusters_;
 
     /**
@@ -173,13 +168,11 @@ protected:
      */
     void initialCenters(vector<Point> & points, vector<size_t >& prohibited_indexes) {
 
-        std::default_random_engine random_engine;
-
         for(int i = 0; i < K_; i++) {
 
             while(true) {
 
-                size_t index_point = random_engine() % num_points_;
+                size_t index_point = rand() % num_points_;
 
                 if(find(prohibited_indexes.begin(), prohibited_indexes.end(),
                         index_point) == prohibited_indexes.end()) {
@@ -273,7 +266,7 @@ protected:
 
 
 public:
-    KMeans(int K, int num_points, size_t dimension, int max_iterations)
+    KMeans(size_t K, size_t num_points, size_t dimension, size_t max_iterations)
             : K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations) {}
 
     void run(vector<Point> & points) {
@@ -291,7 +284,10 @@ public:
 
         for (int iter = 0; iter < max_iterations_; ++iter) {
 
-            cout << "iteration " << iter+1 << "\n";
+            showClusters();
+
+            cout << "============================================\n"
+                 << "iteration " << iter+1 << "\n";
 
             // k clusters are created by associating every observation with the nearest mean.
             if (associate(points)) {
@@ -301,11 +297,9 @@ public:
             // The centroid of each of the k clusters becomes the new mean.
             recenter();
 
-            showClusters();
         }
 
         showClusters();
-
     }
 
 };

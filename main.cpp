@@ -25,8 +25,9 @@ int execute(const string& baseFormat, const string& dataFile, const string& quer
 
 }
 
-int main(int argc, char *argv[])
-{
+
+int kmeansTest() {
+    srand(0);
 
     size_t total_points, dimensions, K, max_iterations, has_name;
     cin >> total_points >> dimensions >> K >> max_iterations >> has_name;
@@ -46,9 +47,14 @@ int main(int argc, char *argv[])
             cin >> value;
             values.push_back(value);
         }
+        if (has_name) {
+            cin >> point_name;
+        }
+    }
 
+
+    for (int i = 0; i < total_points; ++i) {
         Point p(i, & ( values[ dimensions * i]) );
-
         points.push_back(p);
     }
 
@@ -58,6 +64,11 @@ int main(int argc, char *argv[])
 
 
     std::cout <<  std::endl;
+}
 
+
+int main(int argc, char *argv[]) {
+
+    kmeansTest();
     return 0;
 }
