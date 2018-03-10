@@ -13,10 +13,12 @@
 #include <ctime>
 #include <algorithm>
 #include <functional>
-
+#include <climits>
 
 
 #define DEFAULT_CLUSTER_ID (-1)
+
+
 using namespace std;
 
 template <typename DataType>
@@ -65,6 +67,10 @@ protected:
 
     int cluster_id_;
     /**
+     * maximun distance from any point to center
+     */
+    DataType radius_;
+    /**
      * center of this cluster
      */
     vector<DataType> central_values_;
@@ -88,6 +94,24 @@ public:
         for (size_t i = 0; i < dimension; ++i) {
             central_values_.push_back(point.getValues()[i]);
         }
+    }
+
+    DataType calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
+
+        radius_ = std::numeric_limits<double>::min();
+
+        for (int i = 0; i < points_.size(); ++i) {
+            DataType dist = distor(points_[i].data(), central_values_.data(), central_values_.size());
+            if (dist > radius_) {
+                radius_ = dist;
+            }
+        }
+
+        return radius_;
+    }
+
+    DataType getRadius() {
+        return radius_;
     }
 
     void addPoint(const Point<DataType > & point) {
@@ -173,10 +197,14 @@ public:
             recenter();
         }
 
+        for (int i = 0; i < clusters_.size(); ++i) {
+            clusters_[i].calculateRadius(distor_);
+        }
+
         showClusters();
     }
 
-    const vector<Cluster<DataType > > & getCulsters() const {
+    const vector<Cluster<DataType > > & getClusters() const {
         return clusters_;
     }
 protected:
