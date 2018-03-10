@@ -16,6 +16,7 @@
 #define DEFAULT_CLUSTER_ID (-1)
 using namespace std;
 
+template <typename DataType>
 class Point
 {
 protected:
@@ -24,13 +25,13 @@ protected:
     /**
      * one line of data : vector
      */
-    const double * values_;
+    const DataType * values_;
 
 public:
-    Point(int id_point, const double *  values)
+    Point(int id_point, const DataType *  values)
             : point_id_(id_point),  values_(values), cluster_id_(DEFAULT_CLUSTER_ID) {}
 
-    Point(const Point& p): point_id_(p.point_id_), values_(p.values_), cluster_id_(p.cluster_id_) {}
+    Point(const Point<DataType > & p): point_id_(p.point_id_), values_(p.values_), cluster_id_(p.cluster_id_) {}
 
     void setCluster(int id_cluster) {
         this->cluster_id_ = id_cluster;
@@ -44,26 +45,26 @@ public:
         return point_id_;
     }
 
-    double getValue(int index) const {
+    DataType getValue(int index) const {
         return values_[index];
     }
 
-    const double * const  getValues() const {
+    const DataType * const  getValues() const {
         return values_;
     }
 };
 
-
+template <typename DataType>
 class Cluster
 {
 
 protected:
     int cluster_id_;
-    vector<double> central_values_;
-    vector<Point> points_;
+    vector<DataType> central_values_;
+    vector<Point<DataType > > points_;
 
 public:
-    Cluster(int id_cluster, const Point& point, size_t dimension)
+    Cluster(int id_cluster, const Point<DataType > & point, size_t dimension)
             : cluster_id_(id_cluster), points_(1, point) {
 
         central_values_.reserve(dimension);
@@ -72,7 +73,7 @@ public:
         }
     }
 
-    void addPoint(const Point& point) {
+    void addPoint(const Point<DataType > & point) {
         points_.push_back(point);
     }
 
@@ -89,19 +90,19 @@ public:
         return false;
     }
 
-    double getCentralValue(int index) const {
+    DataType getCentralValue(int index) const {
         return central_values_[index];
     }
 
-    const vector<double >& getCentralValues() const {
+    const vector<DataType >& getCentralValues() const {
         return central_values_;
     }
 
-    void setCentralValue(int index, double value) {
+    void setCentralValue(int index, DataType value) {
         central_values_[index] = value;
     }
 
-    const Point& getPoint(int index) const {
+    const Point<DataType > & getPoint(int index) const {
         return points_[index];
     }
 
@@ -115,7 +116,7 @@ public:
 
 };
 
-
+template <typename DataType>
 class KMeans
 {
 protected:
@@ -123,16 +124,16 @@ protected:
     size_t dimension_;
     size_t num_points_;
     size_t max_iterations_;
-    vector<Cluster> clusters_;
+    vector<Cluster<DataType > > clusters_;
 
     /**
      * return ID of nearest center (uses euclidean distance)
      * @param point
      * @return
      */
-    int getIDNearestCenter(Point point) {
-        double sum = 0.0;
-        double min_dist;
+    int getIDNearestCenter(Point<DataType >  point) {
+        DataType sum = 0.0;
+        DataType min_dist;
         int id_cluster_center = 0;
 
         for(int i = 0; i < dimension_; i++) {
@@ -142,7 +143,7 @@ protected:
         min_dist = sqrt(sum);
 
         for(int i = 1; i < K_; i++) {
-            double dist;
+            DataType dist;
             sum = 0.0;
 
             for(int j = 0; j < dimension_; j++) {
@@ -166,7 +167,7 @@ protected:
      * @param points
      * @param prohibited_indexes
      */
-    void initialCenters(vector<Point> & points, vector<size_t >& prohibited_indexes) {
+    void initialCenters(vector<Point<DataType > > & points, vector<size_t >& prohibited_indexes) {
 
         for(int i = 0; i < K_; i++) {
 
@@ -180,7 +181,7 @@ protected:
                     prohibited_indexes.push_back(index_point);
                     points[index_point].setCluster(i);
 
-                    Cluster cluster(i, points[index_point], dimension_);
+                    Cluster<DataType >  cluster(i, points[index_point], dimension_);
                     clusters_.push_back(cluster);
                     break;
                 }
@@ -197,7 +198,7 @@ protected:
 
             for(int j = 0; j < dimension_; j++) {
 
-                double sum = 0.0;
+                DataType sum = 0.0;
 
                 if(total_points_cluster > 0) {
 
@@ -214,7 +215,7 @@ protected:
      * @param points
      * @return true if no action performed
      */
-    bool associate(vector<Point> & points) {
+    bool associate(vector<Point<DataType > > & points) {
         bool done = true;
 
         // associates each point to the nearest center
@@ -269,7 +270,7 @@ public:
     KMeans(size_t K, size_t num_points, size_t dimension, size_t max_iterations)
             : K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations) {}
 
-    void run(vector<Point> & points) {
+    void run(vector<Point<DataType > > & points) {
 
         // check requirement
         if(K_ > num_points_){
