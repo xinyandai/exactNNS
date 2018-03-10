@@ -162,6 +162,9 @@ public:
         showClusters();
     }
 
+    const vector<Cluster<DataType > > & getCulsters() const {
+        return clusters_;
+    }
 protected:
     size_t K_; // number of clusters
     size_t dimension_;
@@ -285,11 +288,9 @@ protected:
             cout << "Cluster " << clusters_[i].getID() + 1 << endl;
 
             for(int j = 0; j < total_points_cluster; j++) {
-                cout << "Point " << clusters_[i].getPoint(j).getID() + 1 << ": ";
-                for(int p = 0; p < dimension_; p++)
-                    cout << clusters_[i].getPoint(j).getValue(p) << " ";
-                cout << endl;
+                cout << clusters_[i].getPoint(j).getID() + 1 << " ";
             }
+            cout << endl;
 
             cout << "Cluster values: ";
 

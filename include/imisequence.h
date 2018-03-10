@@ -28,8 +28,8 @@ class IMISequence{
 public:
     typedef vector<unsigned > Coord;
     IMISequence(
-            unsigned dimension,
-            const vector<unsigned > & lengths,
+            size_t dimension,
+            const vector<size_t > & lengths,
             const function<float (Coord)>& func)
             :  _dimension(dimension), _lengths(lengths) {
 
@@ -78,8 +78,8 @@ public:
 protected:
     // dist stores float value, data stores the index in the given leftVec or rightVec;
 
-    unsigned  _dimension;
-    vector<unsigned> _lengths;
+    size_t  _dimension;
+    vector<size_t > _lengths;
 
     vector<bool > visited_;
     function<float (Coord)> distor_;

@@ -3,13 +3,19 @@
 #include <iostream>
 
 namespace metric {
+
     template <typename DataType>
-    DataType euclidDistance(const DataType* vec1, const DataType * vec2, size_t dim_) {
+    DataType squareEuclidDistance(const DataType *vec1, const DataType *vec2, size_t dim_) {
         DataType dist_ = 0.0;
         for (int i = 0; i < dim_; ++i) {
             dist_ += (vec1[i]-vec2[i]) * (vec1[i]-vec2[i]);
         }
-        return sqrt(dist_);
+        return dist_;
+    }
+
+    template <typename DataType>
+    DataType euclidDistance(const DataType* vec1, const DataType * vec2, size_t dim_) {
+        return sqrt(squareEuclidDistance(vec1, vec2, dim_));
     }
 
     template <typename DataType>
