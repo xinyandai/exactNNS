@@ -8,7 +8,7 @@
 #include <utility>
 #include <queue>
 #include <functional>
-#include "util/heap_element.h"
+#include "heap_element.h"
 using std::vector;
 using std::pair;
 using std::function;

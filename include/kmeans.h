@@ -12,6 +12,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <functional>
+
+
 
 #define DEFAULT_CLUSTER_ID (-1)
 using namespace std;
@@ -119,39 +122,69 @@ public:
 template <typename DataType>
 class KMeans
 {
+public:
+    /**
+     *
+     * @param K
+     * @param num_points        the number of point in train data.
+     * @param dimension         dimension of each point.
+     * @param max_iterations
+     * @param distance          a function to calculate distance between point and center, and is used to determine which cluster the point belongs to.
+     */
+    KMeans(size_t K,
+           size_t num_points,
+           size_t dimension,
+           size_t max_iterations,
+           std::function<DataType (const DataType*, const DataType*, size_t) > distance)
+            :
+            K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations), distor_(distance) {}
+
+    void run(vector<Point<DataType > > & points) {
+
+        // check requirement
+        if(K_ > num_points_){
+            std::cout << "K_ is bigger than number of points" << std::endl;
+            return;
+        }
+        // initial center
+        initialCenters(points);
+        //iterate to run k-means: reallocate and re-calculate center
+        for (int iter = 0; iter < max_iterations_; ++iter) {
+
+            // k clusters are created by associating every observation with the nearest mean.
+            if (associate(points)) {
+                break;
+            }
+            // The centroid of each of the k clusters becomes the new mean.
+            recenter();
+        }
+
+        showClusters();
+    }
+
 protected:
     size_t K_; // number of clusters
     size_t dimension_;
     size_t num_points_;
     size_t max_iterations_;
     vector<Cluster<DataType > > clusters_;
+    std::function<DataType (const DataType*, const DataType*, size_t) > distor_;
+
 
     /**
      * return ID of nearest center (uses euclidean distance)
      * @param point
      * @return
      */
-    int getIDNearestCenter(Point<DataType >  point) {
-        DataType sum = 0.0;
+    int getIDNearestCenter(Point<DataType >&  point) {
+
         DataType min_dist;
         int id_cluster_center = 0;
 
-        for(int i = 0; i < dimension_; i++) {
-            sum += pow(clusters_[0].getCentralValue(i) - point.getValue(i), 2.0);
-        }
-
-        min_dist = sqrt(sum);
+        min_dist = distor_(clusters_[0].getCentralValues().data(), point.getValues(), dimension_);
 
         for(int i = 1; i < K_; i++) {
-            DataType dist;
-            sum = 0.0;
-
-            for(int j = 0; j < dimension_; j++) {
-                sum += pow(clusters_[i].getCentralValue(j) -
-                           point.getValue(j), 2.0);
-            }
-
-            dist = sqrt(sum);
+            DataType dist = distor_(clusters_[i].getCentralValues().data(), point.getValues(), dimension_);
 
             if(dist < min_dist) {
                 min_dist = dist;
@@ -165,9 +198,10 @@ protected:
     /**
      * choose K distinct values for the centers of the clusters
      * @param points
-     * @param prohibited_indexes
      */
-    void initialCenters(vector<Point<DataType > > & points, vector<size_t >& prohibited_indexes) {
+    void initialCenters(vector<Point<DataType > > & points) {
+
+        vector<size_t > prohibited_indexes;
 
         for(int i = 0; i < K_; i++) {
 
@@ -212,6 +246,7 @@ protected:
     }
 
     /**
+     * re allocate each point to its nearest cluster center.
      * @param points
      * @return true if no action performed
      */
@@ -263,44 +298,6 @@ protected:
 
             cout << "\n\n";
         }
-    }
-
-
-public:
-    KMeans(size_t K, size_t num_points, size_t dimension, size_t max_iterations)
-            : K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations) {}
-
-    void run(vector<Point<DataType > > & points) {
-
-        // check requirement
-        if(K_ > num_points_){
-            std::cout << "K_ is bigger than number of points" << std::endl;
-            return;
-        }
-
-        // initial center
-        vector<size_t > prohibited_indexes;
-        initialCenters(points, prohibited_indexes);
-
-
-        for (int iter = 0; iter < max_iterations_; ++iter) {
-
-            showClusters();
-
-            cout << "============================================\n"
-                 << "iteration " << iter+1 << "\n";
-
-            // k clusters are created by associating every observation with the nearest mean.
-            if (associate(points)) {
-                break;
-            }
-
-            // The centroid of each of the k clusters becomes the new mean.
-            recenter();
-
-        }
-
-        showClusters();
     }
 
 };
