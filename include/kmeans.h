@@ -71,7 +71,7 @@ protected:
     /**
      * all point belongs to this cluster.
      */
-    vector<const Point<DataType >* > points_;
+    vector<Point<DataType > > points_;
 
 public:
     /**
@@ -81,7 +81,7 @@ public:
      * @param dimension the dimension of center / point.
      */
     Cluster(int id_cluster, const Point<DataType > & point, size_t dimension)
-            : cluster_id_(id_cluster), points_(1, &point) {
+            : cluster_id_(id_cluster), points_(1, point) {
 
         // initial center with "point"
         central_values_.reserve(dimension);
@@ -91,13 +91,13 @@ public:
     }
 
     void addPoint(const Point<DataType > & point) {
-        points_.push_back(&point);
+        points_.push_back(point);
     }
 
     bool removePoint(int id_point) {
 
         for(int i = 0; i < points_.size(); i++) {
-            if(points_[i]->getID() == id_point) {
+            if(points_[i].getID() == id_point) {
 
                 points_.erase(points_.begin() + i);
                 return true;
@@ -120,7 +120,7 @@ public:
     }
 
     const Point<DataType > & getPoint(int index) const {
-        return *points_[index];
+        return points_[index];
     }
 
     size_t getClusterSize() const {
@@ -179,7 +179,6 @@ public:
     const vector<Cluster<DataType > > & getCulsters() const {
         return clusters_;
     }
-
 protected:
     size_t K_; // number of clusters
     size_t dimension_;
