@@ -62,14 +62,28 @@ class Cluster
 {
 
 protected:
+
     int cluster_id_;
+    /**
+     * center of this cluster
+     */
     vector<DataType> central_values_;
+    /**
+     * all point belongs to this cluster.
+     */
     vector<Point<DataType > > points_;
 
 public:
+    /**
+     *
+     * @param id_cluster
+     * @param point the point we used to init cluster.
+     * @param dimension the dimension of center / point.
+     */
     Cluster(int id_cluster, const Point<DataType > & point, size_t dimension)
             : cluster_id_(id_cluster), points_(1, point) {
 
+        // initial center with "point"
         central_values_.reserve(dimension);
         for (size_t i = 0; i < dimension; ++i) {
             central_values_.push_back(point.getValues()[i]);
