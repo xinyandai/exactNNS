@@ -123,6 +123,14 @@ namespace lshbox {
         return bits;
     }
 
+    long to_long(vector<unsigned > pointIndex, size_t decimal) {
+        long result = 0;
+        for (int i = 0; i < pointIndex.size(); ++i) {
+            result = result * decimal + pointIndex[i];
+        }
+        return result;
+    }
+
     unsigned countOnes(unsigned long long xorVal) {
         unsigned hamDist = 0;
         while(xorVal != 0){

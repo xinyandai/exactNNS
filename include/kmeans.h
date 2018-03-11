@@ -96,6 +96,9 @@ public:
         }
     }
 
+    Cluster() {
+    }
+
     DataType calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
 
         radius_ = std::numeric_limits<double>::min();
@@ -108,6 +111,10 @@ public:
         }
 
         return radius_;
+    }
+
+    Cluster merge(const Cluster& cluster) {
+
     }
 
     DataType getRadius() {

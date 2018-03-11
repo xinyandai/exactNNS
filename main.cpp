@@ -1,19 +1,23 @@
 #include <iostream>
+#include <queue>
+#include <unordered_map>
 
 #include "include/util.h"
 #include "include/kmeans.h"
 #include "include/metric.h"
 #include "include/imisequence.h"
-#include "include/heap_element.h"
-#include <queue>
+
 
 using namespace std;
+
 
 template <typename DataType>
 void preProcess(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query) {
     // 2.1 mean
     // 2.2 eigen allocate or optimized product quantization
 }
+
+
 
 template <typename DataType>
 void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query) {
@@ -50,8 +54,26 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
         kMeans[i].run(points[i]);
     }
 
-    //todo
+    // TODO
     // merge codebooks
+    std::unordered_map<long ,  Cluster> tables;
+    std::function<void (size_t,long,Cluster)> merger;
+
+    merger = [&](size_t codebook_size, long key, Cluster cluster) {
+
+        if (codebook_size == 0) {
+
+            tables.at(key) = cluster;
+        } else {
+
+            KMeans& subKMeans = kMeans[codebook_size-1];
+            for (int i = 0; i < K; ++i) {
+                merger(codebook_size-1, key*codebook_default_dimension+i, cluster.merge( subKMeans.getClusters()[i] );
+            }
+        }
+
+    };
+    merger(num_codebook, 0, Cluster());
 
     for (int point_id = 0; point_id < query.getSize(); ++point_id) {
 
@@ -84,7 +106,7 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
         for (int bucketNum = 0; lowerBound<upperBound && imiSequence.hasNext(); bucketNum++) {
             auto next = imiSequence.next();
-            Cluster& nextCluster = tables[next.second];
+            Cluster& nextCluster = tables[lshbox::to_long(next.second, codebook_default_dimension)];
             DistDataMax<Point> kDist = maxHeap.top();
 
             for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
@@ -103,6 +125,7 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
     }
 }
+
 template <typename DataType>
 int execute(const string& dataFile, const string& queryFile) {
 
