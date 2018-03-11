@@ -56,24 +56,25 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
     // TODO
     // merge codebooks
-    std::unordered_map<long ,  Cluster> tables;
-    std::function<void (size_t,long,Cluster)> merger;
+    std::unordered_map<long ,  Cluster<DataType> > tables;
+    std::function<void (size_t, long, Cluster<DataType>)> merger;
 
-    merger = [&](size_t codebook_size, long key, Cluster cluster) {
+    merger = [&](size_t codebook_size, long key, Cluster<DataType> cluster) {
 
         if (codebook_size == 0) {
 
             tables.at(key) = cluster;
         } else {
 
-            KMeans& subKMeans = kMeans[codebook_size-1];
+            KMeans<DataType>& subKMeans = kMeans[codebook_size-1];
             for (int i = 0; i < K; ++i) {
-                merger(codebook_size-1, key*codebook_default_dimension+i, cluster.merge( subKMeans.getClusters()[i] );
+                merger(codebook_size-1, key*codebook_default_dimension+i, cluster.merge( subKMeans.getClusters()[i] ) );
             }
         }
 
     };
-    merger(num_codebook, 0, Cluster());
+    merger(num_codebook, 0, Cluster<DataType>());
+
 
     for (int point_id = 0; point_id < query.getSize(); ++point_id) {
 
@@ -85,7 +86,7 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
             for (int codebookIndex = 0; codebookIndex < num_codebook; ++codebookIndex) {
 
                 KMeans<DataType>& currentKMeans = kMeans[codebookIndex];
-                Cluster<DataType>& cluster = currentKMeans.getClusters()[clusterIDS[codebookIndex]];
+                const Cluster<DataType>& cluster = currentKMeans.getClusters()[clusterIDS[codebookIndex]];
 
                 DataType query_center = metric::euclidDistance(
                         &queryPoint[codebookIndex*codebook_default_dimension],
@@ -102,18 +103,18 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
         long double upperBound = 0;
         long double lowerBound = 0;
-        priority_queue<DistDataMax<Point > > maxHeap;
+        priority_queue<DistDataMax<Point<DataType> > > maxHeap;
 
         for (int bucketNum = 0; lowerBound<upperBound && imiSequence.hasNext(); bucketNum++) {
             auto next = imiSequence.next();
-            Cluster& nextCluster = tables[lshbox::to_long(next.second, codebook_default_dimension)];
-            DistDataMax<Point> kDist = maxHeap.top();
+            Cluster<DataType>& nextCluster = tables[lshbox::to_long(next.second, codebook_default_dimension)];
+            DistDataMax<Point<DataType>> kDist = maxHeap.top();
 
             for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
                 DataType distance = metric::euclidDistance(nextCluster.getPoint(i).getValues(), queryPoint, (size_t)query.getDim());
                 if (distance < kDist.dist()) {
                     maxHeap.pop();
-                    maxHeap.push(DistDataMax<Point>(distance, nextCluster.getPoint(i)));
+                    maxHeap.push(DistDataMax<Point<DataType> >(distance, nextCluster.getPoint(i)));
                     kDist = maxHeap.top();
                 }
             }

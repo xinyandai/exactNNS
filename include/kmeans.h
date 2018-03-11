@@ -104,7 +104,7 @@ public:
         radius_ = std::numeric_limits<double>::min();
 
         for (int i = 0; i < points_.size(); ++i) {
-            DataType dist = distor(points_[i].data(), central_values_.data(), central_values_.size());
+            DataType dist = distor(points_[i].getValues(), central_values_.data(), central_values_.size());
             if (dist > radius_) {
                 radius_ = dist;
             }
@@ -117,7 +117,7 @@ public:
 
     }
 
-    DataType getRadius() {
+    DataType getRadius() const {
         return radius_;
     }
 
