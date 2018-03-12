@@ -123,8 +123,9 @@ namespace lshbox {
         return bits;
     }
 
-    long to_long(vector<unsigned > pointIndex, size_t decimal) {
-        long result = 0;
+    template <typename DataType>
+    unsigned long to_long(vector<DataType > pointIndex, size_t decimal) {
+        unsigned long result = 0;
         for (int i = 0; i < pointIndex.size(); ++i) {
             result = result * decimal + pointIndex[i];
         }

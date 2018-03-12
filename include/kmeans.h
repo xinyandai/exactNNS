@@ -65,7 +65,7 @@ class Cluster
 
 protected:
 
-    int cluster_id_;
+    size_t cluster_id_;
     /**
      * maximun distance from any point to center
      */
@@ -86,7 +86,7 @@ public:
      * @param point the point we used to init cluster.
      * @param dimension the dimension of center / point.
      */
-    Cluster(int id_cluster, const Point<DataType > & point, size_t dimension)
+    Cluster(size_t id_cluster, const Point<DataType > & point, size_t dimension)
             : cluster_id_(id_cluster), points_(1, point) {
 
         // initial center with "point"
@@ -96,8 +96,7 @@ public:
         }
     }
 
-    Cluster() {
-    }
+    Cluster(size_t id, const vector<DataType> central_values):cluster_id_(id), central_values_(central_values) {}
 
     DataType calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
 
@@ -113,8 +112,28 @@ public:
         return radius_;
     }
 
-    Cluster merge(const Cluster& cluster) {
+    /**
+    *
+    * @param cluster
+    * @param decimal
+    * @return
+    */
+    Cluster merge(const Cluster& cluster, size_t decimal) {
+        vector<DataType> mergedCenter;
+        mergedCenter.insert(mergedCenter.end(), this->central_values_.begin(), this->central_values_.end());
+        mergedCenter.insert(mergedCenter.end(), cluster.central_values_.begin(), cluster.central_values_.end());
 
+        Cluster mergedCluster = Cluster(this->cluster_id_ * decimal + cluster.cluster_id_, mergedCenter);
+        for (int j = 0; j < this->getClusterSize(); ++j) {
+            for (int i = 0; i < cluster.getClusterSize(); ++i) {
+
+                if (cluster.getPoint(i).getID() == this->getPoint(j).getID()) {
+                    mergedCluster.addPoint(this->getPoint(j));
+                }
+            }
+        }
+
+        return mergedCluster;
     }
 
     DataType getRadius() const {
@@ -158,7 +177,7 @@ public:
         return points_.size();
     }
 
-    int getID() const {
+    size_t getID() const {
         return cluster_id_;
     }
 
@@ -228,7 +247,7 @@ protected:
      * @param point
      * @return
      */
-    int getIDNearestCenter(Point<DataType >&  point) {
+    size_t getIDNearestCenter(Point<DataType >&  point) {
 
         DataType min_dist;
         int id_cluster_center = 0;

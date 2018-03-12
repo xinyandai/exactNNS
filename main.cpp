@@ -56,24 +56,24 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
     // TODO
     // merge codebooks
-    std::unordered_map<long ,  Cluster<DataType> > tables;
-    std::function<void (size_t, long, Cluster<DataType>)> merger;
+    std::unordered_map<unsigned long ,  Cluster<DataType> > tables;
+    std::function<void (size_t, Cluster<DataType>)> merger;
 
-    merger = [&](size_t codebook_size, long key, Cluster<DataType> cluster) {
+    merger = [&](size_t codebook_index, Cluster<DataType> cluster) {
 
-        if (codebook_size == 0) {
+        if (codebook_index == -1) {
 
-            tables[key] = cluster;
+            tables.emplace(std::make_pair(cluster.getID(), cluster));
         } else {
 
-            KMeans<DataType>& subKMeans = kMeans[codebook_size-1];
+            KMeans<DataType>& subKMeans = kMeans[codebook_index];
             for (int i = 0; i < K; ++i) {
-                merger(codebook_size-1, key*codebook_default_dimension+i, cluster.merge( subKMeans.getClusters()[i] ) );
+                merger(codebook_index, cluster.merge( subKMeans.getClusters()[i], codebook_default_dimension ) );
             }
         }
 
     };
-    merger(num_codebook, 0, Cluster<DataType>());
+    merger(num_codebook-1, Cluster<DataType>(0L, vector<DataType>()));
 
 
     for (int point_id = 0; point_id < query.getSize(); ++point_id) {
@@ -107,7 +107,8 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
         for (int bucketNum = 0; lowerBound<upperBound && imiSequence.hasNext(); bucketNum++) {
             auto next = imiSequence.next();
-            Cluster<DataType>& nextCluster = tables[lshbox::to_long(next.second, codebook_default_dimension)];
+            const Cluster<DataType>& nextCluster = tables.find(lshbox::to_long(next.second, codebook_default_dimension))->second;
+
             DistDataMax<Point<DataType>> kDist = maxHeap.top();
 
             for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
