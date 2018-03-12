@@ -109,8 +109,8 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
         };
         IMISequence imiSequence(num_codebook, codebook_dimensions, distor);
 
-        long double upperBound = 0;
-        long double lowerBound = 0;
+        long double upperBound = std::numeric_limits<long double>::max();
+        long double lowerBound = std::numeric_limits<long double>::min();
         priority_queue<DistDataMax<Point<DataType> > >& maxHeap = maxHeaps[point_id];
         maxHeap.push( DistDataMax<Point<DataType> >(std::numeric_limits<DataType>::max(), points[0][0] ) );
 
