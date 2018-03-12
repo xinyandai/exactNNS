@@ -132,6 +132,9 @@ public:
                 if (cluster.getPoint(i).getID() == this->getPoint(j).getID()) {
 
                     mergedCluster.addPoint(this->getPoint(j));
+
+                    ++j;
+                    i=0;
                 }
             }
         }

@@ -61,25 +61,15 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
     merger = [&](size_t codebook_index, Cluster<DataType>& cluster) {
 
-        for (int i = 0; i < 4 - codebook_index; ++i) {
-            std::cout << " ";
-        }
-
-        std::cout << "codebook: " << codebook_index << " cluster id: " <<cluster.getID() << std::endl;
-        for (int i = 0; i < 4 - codebook_index; ++i) {
-            std::cout << " ";
-        }
-
         if (codebook_index == -1) {
-            std::cout << " push all " <<cluster.getID() << std::endl;
+
             tables.emplace(std::make_pair(cluster.getID(), cluster));
         } else {
-            std::cout << " extract sub kmeans ";
+
             KMeans<DataType>& subKMeans = kMeans[codebook_index];
             for (int i = 0; i < K; ++i) {
-                std::cout << " merge sub kmeans "  << std::endl;
+
                 Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], K );
-                std::cout << " recursive "  << std::endl;
                 merger(codebook_index-1, mergedCluster );
             }
             std::cout << std::endl;
@@ -91,11 +81,13 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
     merger(num_codebook-1, emptyCluster);
 
 
+    vector<priority_queue<DistDataMax<Point<DataType> > > > maxHeaps(query.getSize());
+
     for (int point_id = 0; point_id < query.getSize(); ++point_id) {
 
         DataType* queryPoint = query[point_id];
 
-        IMISequence imiSequence(num_codebook, codebook_dimensions, [&](vector<unsigned > clusterIDS) {
+        auto distor = [&](vector<unsigned > clusterIDS) {
 
             DataType dist_square = 0.0;
             for (int codebookIndex = 0; codebookIndex < num_codebook; ++codebookIndex) {
@@ -109,16 +101,18 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
                         codebook_dimensions[codebookIndex]
                 );
                 DataType radius = cluster.getRadius();
-                DataType dist_lowerbound = query_center * query_center + radius * radius - 2 * query_center * radius;
+                DataType dist_lower_bound = query_center * query_center + radius * radius - 2 * query_center * radius;
 
-                dist_square += dist_lowerbound;
+                dist_square += dist_lower_bound;
             }
             return dist_square;
-        });
+        };
+        IMISequence imiSequence(num_codebook, codebook_dimensions, distor);
 
         long double upperBound = 0;
         long double lowerBound = 0;
-        priority_queue<DistDataMax<Point<DataType> > > maxHeap;
+        priority_queue<DistDataMax<Point<DataType> > >& maxHeap = maxHeaps[point_id];
+        maxHeap.push( DistDataMax<Point<DataType> >(std::numeric_limits<DataType>::max(), points[0][0] ) );
 
         for (int bucketNum = 0; lowerBound<upperBound && imiSequence.hasNext(); bucketNum++) {
             auto next = imiSequence.next();
@@ -128,6 +122,7 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
             for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
                 DataType distance = metric::euclidDistance(nextCluster.getPoint(i).getValues(), queryPoint, (size_t)query.getDim());
+
                 if (distance < kDist.dist()) {
                     maxHeap.pop();
                     maxHeap.push(DistDataMax<Point<DataType> >(distance, nextCluster.getPoint(i)));
@@ -141,6 +136,29 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
         }
 
     }
+
+
+    string lshboxBenchFileName = "nn.lshbox";
+    // lshbox file
+    ofstream lshboxFout(lshboxBenchFileName);
+    if (!lshboxFout) {
+        cout << "cannot create output file " << lshboxBenchFileName << endl;
+    }
+    lshboxFout << maxHeaps.size() << "\t" << K << endl;
+    for (int query_id = 0; query_id < maxHeaps.size(); ++query_id) {
+        lshboxFout << query_id << "\t";
+        priority_queue<DistDataMax<Point<DataType> > >& maxHeap = maxHeaps[query_id];
+
+        while (maxHeap.size()>0) {
+            DistDataMax<Point<DataType>> kDist = maxHeap.top();
+            maxHeap.pop();
+
+            lshboxFout << kDist.data().getID() << "\t" << kDist.dist() << "\t";
+        }
+        lshboxFout << endl;
+    }
+    lshboxFout.close();
+    cout << "lshbox groundtruth are written into " << lshboxBenchFileName << endl;
 }
 
 template <typename DataType>
