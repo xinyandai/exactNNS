@@ -63,7 +63,7 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
         if (codebook_size == 0) {
 
-            tables.at(key) = cluster;
+            tables[key] = cluster;
         } else {
 
             KMeans<DataType>& subKMeans = kMeans[codebook_size-1];
