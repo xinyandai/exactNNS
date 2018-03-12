@@ -52,7 +52,10 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 
 
     for (int i = 0; i < num_codebook; ++i) {
-        kMeans[i].run(points[i]);
+        KMeans<DataType>& means = kMeans[i];
+
+        means.run(points[i]);
+        means.calculateRadius(metric::euclidDistance<DataType>);
     }
 
     // merge codebooks

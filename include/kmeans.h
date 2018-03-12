@@ -236,6 +236,13 @@ public:
         showClusters();
     }
 
+    void calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
+        for (int j = 0; j < clusters_.size(); ++j) {
+            Cluster<DataType>& cluster = clusters_[j];
+            cluster.calculateRadius(distor);
+        }
+    }
+
     const vector<Cluster<DataType > > & getClusters() const {
         return clusters_;
     }
