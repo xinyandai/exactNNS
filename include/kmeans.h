@@ -94,9 +94,10 @@ public:
         for (size_t i = 0; i < dimension; ++i) {
             central_values_.push_back(point.getValues()[i]);
         }
+
     }
 
-    Cluster(size_t id, const vector<DataType> central_values):cluster_id_(id), central_values_(central_values) {}
+    Cluster(size_t id, const vector<DataType>& central_values):cluster_id_(id), central_values_(central_values) {}
 
     DataType calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
 
@@ -120,14 +121,16 @@ public:
     */
     Cluster merge(const Cluster& cluster, size_t decimal) {
         vector<DataType> mergedCenter;
+
         mergedCenter.insert(mergedCenter.end(), this->central_values_.begin(), this->central_values_.end());
         mergedCenter.insert(mergedCenter.end(), cluster.central_values_.begin(), cluster.central_values_.end());
 
         Cluster mergedCluster = Cluster(this->cluster_id_ * decimal + cluster.cluster_id_, mergedCenter);
+
         for (int j = 0; j < this->getClusterSize(); ++j) {
             for (int i = 0; i < cluster.getClusterSize(); ++i) {
-
                 if (cluster.getPoint(i).getID() == this->getPoint(j).getID()) {
+
                     mergedCluster.addPoint(this->getPoint(j));
                 }
             }
@@ -250,11 +253,11 @@ protected:
     size_t getIDNearestCenter(Point<DataType >&  point) {
 
         DataType min_dist;
-        int id_cluster_center = 0;
+        size_t id_cluster_center = 0;
 
         min_dist = distor_(clusters_[0].getCentralValues().data(), point.getValues(), dimension_);
 
-        for(int i = 1; i < K_; i++) {
+        for(size_t i = 1; i < K_; i++) {
             DataType dist = distor_(clusters_[i].getCentralValues().data(), point.getValues(), dimension_);
 
             if(dist < min_dist) {

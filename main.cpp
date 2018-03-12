@@ -22,7 +22,7 @@ void preProcess(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
 template <typename DataType>
 void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query) {
     size_t num_codebook = 2; // how much codebook
-    size_t K = 32;
+    size_t K = 4;
     size_t max_iterations = 100;
 
     size_t codebook_default_dimension = data.getDim() / num_codebook;
@@ -50,30 +50,45 @@ void buildIndex(lshbox::Matrix<DataType>& data, lshbox::Matrix<DataType>& query)
         points.push_back(subPoints);
     }
 
+
     for (int i = 0; i < num_codebook; ++i) {
         kMeans[i].run(points[i]);
     }
 
-    // TODO
     // merge codebooks
     std::unordered_map<unsigned long ,  Cluster<DataType> > tables;
-    std::function<void (size_t, Cluster<DataType>)> merger;
+    std::function<void (size_t, Cluster<DataType>& )> merger;
 
-    merger = [&](size_t codebook_index, Cluster<DataType> cluster) {
+    merger = [&](size_t codebook_index, Cluster<DataType>& cluster) {
+
+        for (int i = 0; i < 4 - codebook_index; ++i) {
+            std::cout << " ";
+        }
+
+        std::cout << "codebook: " << codebook_index << " cluster id: " <<cluster.getID() << std::endl;
+        for (int i = 0; i < 4 - codebook_index; ++i) {
+            std::cout << " ";
+        }
 
         if (codebook_index == -1) {
-
+            std::cout << " push all " <<cluster.getID() << std::endl;
             tables.emplace(std::make_pair(cluster.getID(), cluster));
         } else {
-
+            std::cout << " extract sub kmeans ";
             KMeans<DataType>& subKMeans = kMeans[codebook_index];
             for (int i = 0; i < K; ++i) {
-                merger(codebook_index, cluster.merge( subKMeans.getClusters()[i], codebook_default_dimension ) );
+                std::cout << " merge sub kmeans "  << std::endl;
+                Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], K );
+                std::cout << " recursive "  << std::endl;
+                merger(codebook_index-1, mergedCluster );
             }
+            std::cout << std::endl;
         }
 
     };
-    merger(num_codebook-1, Cluster<DataType>(0L, vector<DataType>()));
+
+    Cluster<DataType> emptyCluster(0L, vector<DataType>());
+    merger(num_codebook-1, emptyCluster);
 
 
     for (int point_id = 0; point_id < query.getSize(); ++point_id) {
