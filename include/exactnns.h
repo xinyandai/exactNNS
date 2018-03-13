@@ -56,6 +56,7 @@ public:
         writeResult();
     }
 
+protected:
     // TODO
     void preProcess() {
         // 2.1 mean
@@ -140,6 +141,53 @@ public:
     }
 
     /**
+     * probe one bucket for one query, them update state.
+     * @param imiSequence
+     * @param distToClusters
+     * @param maxHeap topK result will be stored in heap
+     * @param queryPoint
+     * @param upperBound  will be update
+     * @param lowerBound will be update
+     */
+    void inline probeOneBucket(IMISequence& imiSequence,
+                        vector<vector<pair<size_t , DataType> > > & distToClusters,
+                        priority_queue<DistDataMax<int > >& maxHeap,
+                        DataType* queryPoint,
+                        long double& upperBound,
+                        long double& lowerBound) {
+
+        auto next = imiSequence.next();
+        unsigned long key = 0;
+        for (int codeBookIndex = 0; codeBookIndex < num_codebook_; ++codeBookIndex) {
+            unsigned clusterID = next.second[codeBookIndex];
+            pair<size_t , DataType>& dists = distToClusters[codeBookIndex][clusterID];
+            key = key * clusterK_ + dists.first;
+        }
+
+        if (tables.find(key) == tables.end()) {
+            assert(false);
+        }
+        const Cluster<DataType>& nextCluster = tables.find(key)->second;
+
+        DistDataMax<int > kDist = maxHeap.top();
+
+        for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
+            DataType distance = metric::euclidDistance(data_[nextCluster.getPoint(i).getID()], queryPoint, (size_t)query_.getDim());
+
+            if (distance < kDist.dist()) {
+                if (maxHeap.size() == topK_) {
+                    maxHeap.pop();
+                }
+                maxHeap.push(DistDataMax<int >(distance, nextCluster.getPoint(i).getID()));
+                kDist = maxHeap.top();
+            }
+        }
+
+        upperBound = metric::squareEuclidDistance(data_[kDist.data()], queryPoint, (size_t)query_.getDim());
+        lowerBound = next.first;
+    }
+
+    /**
      * search topK nearest neighbor for queryPoint, and result is saved in maxHeap.
      * @param queryPoint
      * @param maxHeap
@@ -150,6 +198,7 @@ public:
         vector<vector<pair<size_t , DataType> > > distToClusters(num_codebook_);
         calculateQueryCenterDist(queryPoint, distToClusters);
 
+        // lambda to get distance
         auto distor = [&](vector<unsigned > clusterIDS) {
 
             DataType dist_square = 0.0;
@@ -165,45 +214,16 @@ public:
 
         long double upperBound = std::numeric_limits<long double>::max();
         long double lowerBound = - std::numeric_limits<long double>::max();
-
+        //
         maxHeap.push( DistDataMax<int >(std::numeric_limits<DataType>::max(), 0 ) );
 
         int bucketNum;
         for (bucketNum = 0; imiSequence.hasNext() && lowerBound<upperBound; bucketNum++) {
-            auto next = imiSequence.next();
-            unsigned long key = 0;
-            for (int codeBookIndex = 0; codeBookIndex < num_codebook_; ++codeBookIndex) {
-                unsigned clusterID = next.second[codeBookIndex];
-                pair<size_t , DataType>& dists = distToClusters[codeBookIndex][clusterID];
-                key = key * clusterK_ + dists.first;
-            }
 
-            if (tables.find(key) == tables.end()) {
-                assert(false);
-            }
-            const Cluster<DataType>& nextCluster = tables.find(key)->second;
-
-            DistDataMax<int > kDist = maxHeap.top();
-
-            for (int i = 0; i < nextCluster.getClusterSize(); ++i) {
-                DataType distance = metric::euclidDistance(data_[nextCluster.getPoint(i).getID()], queryPoint, (size_t)query_.getDim());
-
-                if (distance < kDist.dist()) {
-                    if (maxHeap.size() == topK_) {
-                        maxHeap.pop();
-                    }
-                    maxHeap.push(DistDataMax<int >(distance, nextCluster.getPoint(i).getID()));
-                    kDist = maxHeap.top();
-                }
-            }
-
-            upperBound = metric::squareEuclidDistance(data_[kDist.data()], queryPoint, (size_t)query_.getDim());
-            lowerBound = next.first;
-
+            probeOneBucket(imiSequence, distToClusters, maxHeap, queryPoint, upperBound, lowerBound);
         }
 
-        std::cout << "percent : " << bucketNum / (long double)std::pow(clusterK_, num_codebook_) << std::endl;
-
+        return bucketNum / (long double)std::pow(clusterK_, num_codebook_);
     }
 
     /**
@@ -213,13 +233,18 @@ public:
         // insert n empty
         maxHeaps.insert(maxHeaps.end(), query_.getSize(), priority_queue<DistDataMax<int > > ());
 
-        long double percent = 0.0;
+        long double average_percent = 0.0;
 
         for (int point_id = 0; point_id < query_.getSize(); ++point_id) {
 
-            percent += searchOnePoint(query_[point_id], maxHeaps[point_id]);
+            long double percent = searchOnePoint(query_[point_id], maxHeaps[point_id]);
+
+            std::cout << "percent : " << percent << std::endl;
+            average_percent += percent;
         }
-        std::cout << "average percent : " << percent / query_.getSize() << std::endl;
+
+        std::cout << "average percent : " << average_percent / query_.getSize() << std::endl;
+
     }
 
     /**
