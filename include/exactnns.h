@@ -129,7 +129,7 @@ public:
 
         maxHeap.push( DistDataMax<int >(std::numeric_limits<DataType>::max(), 0 ) );
 
-        for (int bucketNum = 0; imiSequence.hasNext(); bucketNum++) {
+        for (int bucketNum = 0; imiSequence.hasNext() && lowerBound<upperBound; bucketNum++) {
             auto next = imiSequence.next();
             unsigned long key = 0;
             for (int codeBookIndex = num_codebook_-1; codeBookIndex >= 0; --codeBookIndex) {
