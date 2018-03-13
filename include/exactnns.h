@@ -34,7 +34,6 @@ public:
         mergeProduct();
         //query
         search();
-
         // write result
         writeResult();
     }
@@ -129,7 +128,8 @@ public:
 
         maxHeap.push( DistDataMax<int >(std::numeric_limits<DataType>::max(), 0 ) );
 
-        for (int bucketNum = 0; imiSequence.hasNext() && lowerBound<upperBound; bucketNum++) {
+        int bucketNum;
+        for (bucketNum = 0; imiSequence.hasNext() && lowerBound<upperBound; bucketNum++) {
             auto next = imiSequence.next();
             unsigned long key = 0;
             for (int codeBookIndex = num_codebook_-1; codeBookIndex >= 0; --codeBookIndex) {
@@ -139,7 +139,7 @@ public:
             }
 
             if (tables.find(key) == tables.end()) {
-                assert(true);
+                assert(false);
             }
             const Cluster<DataType>& nextCluster = tables.find(key)->second;
 
@@ -161,6 +161,8 @@ public:
             lowerBound = next.first;
 
         }
+
+        std::cout << "percent : " << bucketNum / std::pow(clusterK_, num_codebook_) << std::endl;
 
     }
 
