@@ -223,6 +223,7 @@ public:
 
             // k clusters are created by associating every observation with the nearest mean.
             if (associate(points)) {
+                std::cout << "break in iteration : " << iter << std::endl;
                 break;
             }
             // The centroid of each of the k clusters becomes the new mean.

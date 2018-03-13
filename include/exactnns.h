@@ -144,7 +144,7 @@ public:
      * @param queryPoint
      * @param maxHeap
      */
-    void searchOnePoint(DataType* queryPoint, priority_queue<DistDataMax<int > >& maxHeap) {
+    long double searchOnePoint(DataType* queryPoint, priority_queue<DistDataMax<int > >& maxHeap) {
 
         // (cluster_id, distance) from query to cluster center for each codebook and each center in each codebook
         vector<vector<pair<size_t , DataType> > > distToClusters(num_codebook_);
@@ -202,7 +202,7 @@ public:
 
         }
 
-        std::cout << "percent : " << bucketNum / std::pow(clusterK_, num_codebook_) << std::endl;
+        std::cout << "percent : " << bucketNum / (long double)std::pow(clusterK_, num_codebook_) << std::endl;
 
     }
 
@@ -213,10 +213,13 @@ public:
         // insert n empty
         maxHeaps.insert(maxHeaps.end(), query_.getSize(), priority_queue<DistDataMax<int > > ());
 
+        long double percent = 0.0;
+
         for (int point_id = 0; point_id < query_.getSize(); ++point_id) {
 
-            searchOnePoint(query_[point_id], maxHeaps[point_id]);
+            percent += searchOnePoint(query_[point_id], maxHeaps[point_id]);
         }
+        std::cout << "average percent : " << percent / query_.getSize() << std::endl;
     }
 
     /**
