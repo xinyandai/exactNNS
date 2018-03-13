@@ -56,12 +56,17 @@ public:
             lshboxFout << query_id << "\t";
             priority_queue<DistDataMax<int > >& maxHeap = maxHeaps[query_id];
 
+            vector<DistDataMax<int> > tempList;
             while (maxHeap.size()>0) {
                 DistDataMax<int> kDist = maxHeap.top();
                 maxHeap.pop();
-
+                tempList.push_back(kDist);
+            }
+            for (int i = tempList.size()-1; i >=0 ; --i) {
+                DistDataMax<int> kDist = tempList[i];
                 lshboxFout << kDist.data() << "\t" << kDist.dist() << "\t";
             }
+
             lshboxFout << endl;
         }
         lshboxFout.close();
@@ -124,7 +129,7 @@ public:
 
         maxHeap.push( DistDataMax<int >(std::numeric_limits<DataType>::max(), 0 ) );
 
-        for (int bucketNum = 0; lowerBound<upperBound && imiSequence.hasNext(); bucketNum++) {
+        for (int bucketNum = 0; imiSequence.hasNext(); bucketNum++) {
             auto next = imiSequence.next();
             unsigned long key = 0;
             for (int codeBookIndex = num_codebook_-1; codeBookIndex >= 0; --codeBookIndex) {
@@ -204,9 +209,9 @@ public:
         if (codebook_index == -1) {
             std::cout << "cluster: " << cluster.getID() << " size: "<< cluster.getClusterSize()<< "\n";
             for (int i = 0; i < cluster.getClusterSize(); ++i) {
-                std::cout << "     point id: " << cluster.getPoint(i).getID() << "\n";
+                std::cout << cluster.getPoint(i).getID() << "  " ;
             }
-
+            std::cout << "\n";
             tables.emplace(std::make_pair(cluster.getID(), cluster));
         } else {
 
