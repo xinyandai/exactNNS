@@ -25,15 +25,14 @@ public:
               topK_(topK){
         // 1.
         calculateCodeBook();
-
         // 2. pre process
         preProcess();
-
         // 3. build indexes with PQ
         // 2-dimension code, which means size of product quantization = 2
         buildIndex();
-
-        // 3. query
+        // 4. merge sub-clusters
+        mergeProduct();
+        //query
         search();
 
         // write result
@@ -159,31 +158,35 @@ public:
 
     }
 
-    void mergeProduct() {
-
-        // merge codebooks
-        std::function<void (size_t, Cluster<DataType>& )> merger;
-
-        merger = [&](size_t codebook_index, Cluster<DataType>& cluster) {
-
-            if (codebook_index == -1) {
-
-                tables.emplace(std::make_pair(cluster.getID(), cluster));
-            } else {
-
-                KMeans<DataType>& subKMeans = kMeans[codebook_index];
-                for (int i = 0; i < clusterK_; ++i) {
-
-                    Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], clusterK_ );
-                    merger(codebook_index-1, mergedCluster );
-                }
-                std::cout << std::endl;
+    void mergeRecursive(int codebook_index, const Cluster<DataType>& cluster) {
+        if (codebook_index == -1) {
+            std::cout << "cluster: " << cluster.getID() << " size: "<< cluster.getClusterSize()<< "\n";
+            for (int i = 0; i < cluster.getClusterSize(); ++i) {
+                std::cout << "     point id: " << cluster.getPoint(i).getID() << "\n";
             }
 
-        };
+            tables.emplace(std::make_pair(cluster.getID(), cluster));
+        } else {
 
-        Cluster<DataType> emptyCluster(0L, vector<DataType>());
-        merger(num_codebook_-1, emptyCluster);
+            KMeans<DataType>& subKMeans = kMeans[codebook_index];
+            for (int i = 0; i < clusterK_; ++i) {
+
+                Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], clusterK_ );
+                mergeRecursive(codebook_index-1, mergedCluster );
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    void mergeProduct() {
+
+        KMeans<DataType>& subKMeans = kMeans[num_codebook_-1];
+
+        for (int i = 0; i < subKMeans.getClusters().size(); ++i) {
+
+            const Cluster<DataType>& mergedCluster =  subKMeans.getClusters()[i];
+            mergeRecursive((int)num_codebook_-2, mergedCluster );
+        }
 
     }
 

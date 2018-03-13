@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
 
 //    kMeansTest<double>();
 
-    string dataFile = "/home/xinyan/programs/data/audio/audio_base.fvecs";
-    string queryFile = "/home/xinyan/programs/data/audio/audio_query.fvecs";
+    string dataFile = "/home/xinyan/programs/data/test/test_base.fvecs";
+    string queryFile = "/home/xinyan/programs/data/test/test_query.fvecs";
 
     execute<float >(dataFile, queryFile);
 

@@ -119,7 +119,7 @@ public:
     * @param decimal
     * @return
     */
-    Cluster merge(const Cluster& cluster, size_t decimal) {
+    Cluster merge(const Cluster& cluster, size_t decimal) const {
         vector<DataType> mergedCenter;
 
         mergedCenter.insert(mergedCenter.end(), this->central_values_.begin(), this->central_values_.end());
@@ -366,20 +366,15 @@ protected:
 
             size_t total_points_cluster =  clusters_[i].getClusterSize();
 
-            cout << "Cluster " << clusters_[i].getID() + 1 << endl;
+            cout << "Cluster " << clusters_[i].getID() << "   \t";
 
             for(int j = 0; j < total_points_cluster; j++) {
-                cout << clusters_[i].getPoint(j).getID() + 1 << " ";
+                cout << clusters_[i].getPoint(j).getID() << " ";
             }
             cout << endl;
 
-            cout << "Cluster values: ";
-
-            for(int j = 0; j < dimension_; j++)
-                cout << clusters_[i].getCentralValue(j) << " ";
-
-            cout << "\n\n";
         }
+        cout << "\n";
     }
 
 };
