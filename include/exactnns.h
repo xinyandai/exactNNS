@@ -144,7 +144,9 @@ public:
                 DataType distance = metric::euclidDistance(data_[nextCluster.getPoint(i).getID()], queryPoint, (size_t)query_.getDim());
 
                 if (distance < kDist.dist()) {
-                    maxHeap.pop();
+                    if (maxHeap.size() == topK_) {
+                        maxHeap.pop();
+                    }
                     maxHeap.push(DistDataMax<int >(distance, nextCluster.getPoint(i).getID()));
                     kDist = maxHeap.top();
                 }
