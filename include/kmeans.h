@@ -101,7 +101,7 @@ public:
 
     DataType calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
 
-        radius_ = std::numeric_limits<double>::min();
+        radius_ = - std::numeric_limits<double>::max();
 
         for (int i = 0; i < points_.size(); ++i) {
             DataType dist = distor(points_[i].getValues(), central_values_.data(), central_values_.size());
