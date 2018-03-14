@@ -6,7 +6,7 @@
 
 
 template <typename DataType>
-class KMeans : public AbstractKMeans<DataType> {
+class KMeans : public KBalls<DataType> {
 
 public:
     /**
@@ -23,7 +23,7 @@ public:
            size_t max_iterations,
            std::function<DataType (const DataType*, const DataType*, size_t) > distance)
 
-            : AbstractKMeans<DataType>(K, num_points, dimension, max_iterations, distance)     {
+            : KBalls<DataType>(K, num_points, dimension, max_iterations, distance)     {
 
         std::cout << "k balls !!" << std::endl;
     }

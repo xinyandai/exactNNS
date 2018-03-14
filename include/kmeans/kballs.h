@@ -21,7 +21,7 @@ public:
            size_t max_iterations,
            std::function<DataType (const DataType*, const DataType*, size_t) > distance)
             : AbstractKMeans<DataType>(K, num_points, dimension, max_iterations, distance)     {
-        std::cout << "k balls !!" << std::endl;
+
     }
 
 
@@ -35,14 +35,14 @@ protected:
 
             Cluster<DataType>& cluster = KBalls<DataType>::clusters_[i];
 
-            vector<const DataType * const > points;
+            vector<const DataType * > points;
             for (int j = 0; j < cluster.getClusterSize(); ++j) {
                 points.push_back(cluster.getPoint(j).getValues());
             }
 
             // define the types of iterators through the points and their coordinates
             // ----------------------------------------------------------------------
-            typedef typename vector<const DataType * const >::const_iterator PointIterator;
+            typedef typename vector<const DataType * >::const_iterator PointIterator;
             typedef const DataType* CoordIterator;
 
             // create an instance of Miniball
