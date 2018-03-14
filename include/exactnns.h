@@ -40,7 +40,10 @@ public:
               num_codebook_(num_codebook),
               clusterK_(clusterK),
               max_iterations_(max_iteration),
-              topK_(topK){
+              topK_(topK),
+              upper_bound_log_("log_upper_bound_.log"),
+              lower_bound_log_("log_lower_bound_.log"),
+              percent_log_("log_percent_.log"){
         // 1. calculate dimension in each code book
         calculateCodeBook();
         // 2. pre process
@@ -56,6 +59,11 @@ public:
         writeResult();
     }
 
+    ~ ExactNNS() {
+        upper_bound_log_.close();
+        lower_bound_log_.close();
+        percent_log_.close();
+    }
 protected:
     // TODO
     void preProcess() {
@@ -221,7 +229,12 @@ protected:
         for (bucketNum = 0; imiSequence.hasNext() && lowerBound<upperBound; bucketNum++) {
 
             probeOneBucket(imiSequence, distToClusters, maxHeap, queryPoint, upperBound, lowerBound);
+            upper_bound_log_ << upperBound << "\t";
+            lower_bound_log_ << lowerBound << "\t";
         }
+
+        upper_bound_log_  << "\n";
+        lower_bound_log_  << "\n";
 
         return bucketNum / (long double)std::pow(clusterK_, num_codebook_);
     }
@@ -239,11 +252,11 @@ protected:
 
             long double percent = searchOnePoint(query_[point_id], maxHeaps[point_id]);
 
-            std::cout << "percent : " << percent << std::endl;
+           percent_log_ << point_id << "\t : \t" << percent << std::endl;
             average_percent += percent;
         }
 
-        std::cout << "average percent : " << average_percent / query_.getSize() << std::endl;
+        percent_log_ << "average\t : \t" << average_percent / query_.getSize() << std::endl;
 
     }
 
@@ -347,6 +360,9 @@ protected:
 protected:
     lshbox::Matrix<DataType>& data_;
     lshbox::Matrix<DataType>& query_;
+    ofstream upper_bound_log_;
+    ofstream lower_bound_log_;
+    ofstream percent_log_;
 
     /**
      * key value table.
