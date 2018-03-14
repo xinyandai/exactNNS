@@ -134,7 +134,7 @@ protected:
     /**
      * recalculating the center of each cluster
      */
-    void recenter() {
+    virtual void recenter() {
         for(int i = 0; i < K_; i++) {
             size_t total_points_cluster = clusters_[i].getClusterSize();
 
@@ -158,7 +158,7 @@ protected:
      * @param points
      * @return true if no action performed
      */
-    bool associate(vector<Point<DataType > > & points) {
+    virtual bool associate(vector<Point<DataType > > & points) {
         bool done = true;
 
         // associates each point to the nearest center
