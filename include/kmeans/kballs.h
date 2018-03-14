@@ -31,9 +31,10 @@ protected:
      * recalculating the center of each cluster
      */
     void recenter() {
-        for(int i = 0; i < KBalls<DataType>::K_; i++) {
 
-            Cluster<DataType>& cluster = KBalls<DataType>::clusters_[i];
+        for(int i = 0; i < AbstractKMeans<DataType>::K_; i++) {
+
+            Cluster<DataType>& cluster = AbstractKMeans<DataType>::clusters_[i];
 
             vector<const DataType * > points;
             for (int j = 0; j < cluster.getClusterSize(); ++j) {
@@ -48,8 +49,14 @@ protected:
             // create an instance of Miniball
             // ------------------------------
             typedef Miniball::Miniball <Miniball::CoordAccessor<PointIterator, CoordIterator> > MiniBall;
-            MiniBall mb ((int)KBalls<DataType>::dimension_, points.begin(), points.end());
+            MiniBall mb ((int)AbstractKMeans<DataType>::dimension_, points.begin(), points.end());
 
+            const DataType* center = mb.center();
+
+
+            for (int k = 0; k < AbstractKMeans<DataType>::dimension_; ++k) {
+                cluster.setCentralValue(k, center[k]);
+            }
         }
     }
 
