@@ -89,8 +89,10 @@ public:
 
                     mergedCluster.addPoint(this->getPoint(j));
 
+                    // next j
                     ++j;
-                    i=0;
+                    // initialize i = 0 after ++i
+                    i = -1;
                 }
             }
         }
