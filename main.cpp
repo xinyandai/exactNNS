@@ -1,5 +1,5 @@
 #include <iostream>
-#include <queue>
+
 
 #include "include/exactnns.h"
 
