@@ -278,8 +278,6 @@ protected:
             KMeans<DataType>& means = kMeans[i];
             // run KMeans
             means.run(points[i]);
-            // calculate radius in each sub-KMeans
-            means.calculateRadius(metric::euclidDistance<DataType>);
         }
 
     }

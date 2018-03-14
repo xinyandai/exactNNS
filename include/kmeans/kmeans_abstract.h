@@ -55,17 +55,15 @@ public:
             recenter();
         }
 
-        for (int i = 0; i < clusters_.size(); ++i) {
-            clusters_[i].calculateRadius(distor_);
-        }
+        calculateRadius();
 
         showClusters();
     }
 
-    void calculateRadius(std::function<DataType (const DataType*, const DataType*, size_t) > distor) {
+    void calculateRadius() {
         for (int j = 0; j < clusters_.size(); ++j) {
             Cluster<DataType>& cluster = clusters_[j];
-            cluster.calculateRadius(distor);
+            cluster.calculateRadius(distor_);
         }
     }
 
