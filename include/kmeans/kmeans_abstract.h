@@ -86,11 +86,42 @@ protected:
     virtual void recenter() = 0;
 
     /**
-     * re allocate each point to its nearest cluster center.
-     * @param points
-     * @return true if no action performed
+     * choose center for each point.
+     *
+     * @param point
+     * @return
      */
-    virtual bool associate(vector<Point<DataType > > & points) = 0;
+    virtual int chooseCenter(Point<DataType >&  point) = 0;
+
+
+    /**
+    * re allocate each point to its nearest cluster center.
+    * @param points
+    * @return true if no action performed
+    */
+    virtual bool associate(vector<Point<DataType > > & points) {
+
+        bool done = true;
+
+        // associates each point to the nearest center
+        for(int i = 0; i < AbstractKMeans<DataType>::num_points_; i++) {
+            int id_old_cluster = points[i].getCluster();
+            int id_nearest_center = chooseCenter(points[i]);
+
+            if(id_old_cluster != id_nearest_center) {
+
+                if(id_old_cluster != DEFAULT_CLUSTER_ID) {
+                    AbstractKMeans<DataType>::clusters_[id_old_cluster].removePoint(points[i].getID());
+                }
+
+                points[i].setCluster(id_nearest_center);
+                AbstractKMeans<DataType>::clusters_[id_nearest_center].addPoint(points[i]);
+                done = false;
+            }
+        }
+
+        return done;
+    }
 
 
     /**

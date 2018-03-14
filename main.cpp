@@ -19,7 +19,7 @@ int execute(const string& dataFile, const string& queryFile) {
 
 
     size_t num_codebook = 2;
-    size_t clusterK = 128;
+    size_t clusterK = 32;
     int topK = 10;
     size_t max_iteration = 500;
 
