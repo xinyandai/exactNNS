@@ -63,59 +63,59 @@ protected:
     }
 
 
-    /**
-     *
-     * @param point
-     * @return
-     */
-    virtual int chooseCenter(Point<DataType >&  point) {
-        DataType min_dist;
-
-        int id_inner_radius  = -1;
-        int id_beyond_radius = -1;
-
-        DataType min_inner_dist = std::numeric_limits<DataType>::max();
-        DataType min_beyond_dist = std::numeric_limits<DataType>::max();
-
-
-        for(int i = 0; i < AbstractKMeans<DataType>::K_; i++) {
-
-            Cluster<DataType>& cluster = AbstractKMeans<DataType>::clusters_[i];
-            DataType dist = AbstractKMeans<DataType>::distor_(cluster.getCentralValues().data(), point.getValues(), AbstractKMeans<DataType>::dimension_);
-
-            if (dist < min_beyond_dist) {
-
-                min_beyond_dist = dist;
-                id_beyond_radius = i;
-            }
-
-            if (dist < min_inner_dist && dist < cluster.getRadius()) {
-                min_inner_dist = dist;
-                id_inner_radius = i;
-            }
-
-        }
-
-        return id_inner_radius == -1? id_beyond_radius : id_inner_radius;
-    }
-
-    /**
-     * use standard KMeans to initialize cluster centers.
-     * @param points
-     */
-    virtual void initialCenters(vector<Point<DataType > > & points) {
-
-        StandardKMeans<DataType>::initialCenters(points);
-
-        //iterate to run k-means: reallocate and re-calculate center
-        for (int iter = 0; iter < 2; ++iter) {
-
-            if (StandardKMeans<DataType>::associate(points)) {
-                break;
-            }
-            StandardKMeans<DataType>::recenter();
-        }
-
-        StandardKMeans<DataType>::calculateRadius();
-    }
+//    /**
+//     *
+//     * @param point
+//     * @return
+//     */
+//    virtual int chooseCenter(Point<DataType >&  point) {
+//        DataType min_dist;
+//
+//        int id_inner_radius  = -1;
+//        int id_beyond_radius = -1;
+//
+//        DataType min_inner_dist = std::numeric_limits<DataType>::max();
+//        DataType min_beyond_dist = std::numeric_limits<DataType>::max();
+//
+//
+//        for(int i = 0; i < AbstractKMeans<DataType>::K_; i++) {
+//
+//            Cluster<DataType>& cluster = AbstractKMeans<DataType>::clusters_[i];
+//            DataType dist = AbstractKMeans<DataType>::distor_(cluster.getCentralValues().data(), point.getValues(), AbstractKMeans<DataType>::dimension_);
+//
+//            if (dist < min_beyond_dist) {
+//
+//                min_beyond_dist = dist;
+//                id_beyond_radius = i;
+//            }
+//
+//            if (dist < min_inner_dist && dist < cluster.getRadius()) {
+//                min_inner_dist = dist;
+//                id_inner_radius = i;
+//            }
+//
+//        }
+//
+//        return id_inner_radius == -1? id_beyond_radius : id_inner_radius;
+//    }
+//
+//    /**
+//     * use standard KMeans to initialize cluster centers.
+//     * @param points
+//     */
+//    virtual void initialCenters(vector<Point<DataType > > & points) {
+//
+//        StandardKMeans<DataType>::initialCenters(points);
+//
+//        //iterate to run k-means: reallocate and re-calculate center
+//        for (int iter = 0; iter < 2; ++iter) {
+//
+//            if (StandardKMeans<DataType>::associate(points)) {
+//                break;
+//            }
+//            StandardKMeans<DataType>::recenter();
+//        }
+//
+//        StandardKMeans<DataType>::calculateRadius();
+//    }
 };
