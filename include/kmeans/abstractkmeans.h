@@ -18,7 +18,7 @@ class AbstractKMeans
 public:
     /**
      *
-     * @param K
+     * @param K                 number of centers/clusters
      * @param num_points        the number of point in train data.
      * @param dimension         dimension of each point.
      * @param max_iterations
@@ -28,9 +28,11 @@ public:
                    size_t num_points,
                    size_t dimension,
                    size_t max_iterations,
-                   std::function<DataType (const DataType*, const DataType*, size_t) > distance)
-            :
-            K_(K), num_points_(num_points), dimension_(dimension), max_iterations_(max_iterations), distor_(distance) {}
+                   std::function<DataType (const DataType*, const DataType*, size_t) > distance) :
+            K_(K), dimension_(dimension), num_points_(num_points),  max_iterations_(max_iterations), distor_(distance) {
+
+        clusters_.reserve(K_);
+    }
 
     void run(vector<Point<DataType > > & points) {
 
@@ -84,14 +86,14 @@ protected:
      * @param point
      * @return
      */
-    size_t getIDNearestCenter(Point<DataType >&  point) {
+    int getIDNearestCenter(Point<DataType >&  point) {
 
         DataType min_dist;
-        size_t id_cluster_center = 0;
+        int id_cluster_center = 0;
 
         min_dist = distor_(clusters_[0].getCentralValues().data(), point.getValues(), dimension_);
 
-        for(size_t i = 1; i < K_; i++) {
+        for(int i = 1; i < K_; i++) {
             DataType dist = distor_(clusters_[i].getCentralValues().data(), point.getValues(), dimension_);
 
             if(dist < min_dist) {

@@ -25,7 +25,6 @@ public:
 
             : KBalls<DataType>(K, num_points, dimension, max_iterations, distance)     {
 
-        std::cout << "k balls !!" << std::endl;
     }
 
 
