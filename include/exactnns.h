@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "util.h"
-#include "kmeans.h"
+#include "kmeans/kmeans.h"
 #include "metric.h"
 #include "imisequence.h"
 
