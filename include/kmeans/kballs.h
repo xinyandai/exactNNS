@@ -1,10 +1,10 @@
 //
 // Created by xinyan on 3/14/18.
 //
-#include "abstractkmeans.h"
+#include "kmeans_standard.h"
 
 template <typename DataType>
-class KBalls : public AbstractKMeans<DataType> {
+class KBalls : public StandardKMeans<DataType> {
 
 public:
     /**
@@ -20,7 +20,7 @@ public:
            size_t dimension,
            size_t max_iterations,
            std::function<DataType (const DataType*, const DataType*, size_t) > distance)
-            : AbstractKMeans<DataType>(K, num_points, dimension, max_iterations, distance)     {
+            : StandardKMeans<DataType>(K, num_points, dimension, max_iterations, distance)     {
 
     }
 
@@ -59,6 +59,5 @@ protected:
             }
         }
     }
-
 
 };

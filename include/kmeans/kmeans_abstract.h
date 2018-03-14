@@ -72,6 +72,7 @@ public:
     const vector<Cluster<DataType > > & getClusters() const {
         return clusters_;
     }
+
 protected:
     size_t K_; // number of clusters
     size_t dimension_;
@@ -82,34 +83,23 @@ protected:
 
 
     /**
-     * return ID of nearest center (uses euclidean distance)
-     * @param point
-     * @return
+     * recalculating the center of each cluster
      */
-    int getIDNearestCenter(Point<DataType >&  point) {
+    virtual void recenter() = 0;
 
-        DataType min_dist;
-        int id_cluster_center = 0;
+    /**
+     * re allocate each point to its nearest cluster center.
+     * @param points
+     * @return true if no action performed
+     */
+    virtual bool associate(vector<Point<DataType > > & points) = 0;
 
-        min_dist = distor_(clusters_[0].getCentralValues().data(), point.getValues(), dimension_);
-
-        for(int i = 1; i < K_; i++) {
-            DataType dist = distor_(clusters_[i].getCentralValues().data(), point.getValues(), dimension_);
-
-            if(dist < min_dist) {
-                min_dist = dist;
-                id_cluster_center = i;
-            }
-        }
-
-        return id_cluster_center;
-    }
 
     /**
      * choose K distinct values for the centers of the clusters
      * @param points
      */
-    void initialCenters(vector<Point<DataType > > & points) {
+    virtual void initialCenters(vector<Point<DataType > > & points) {
 
         vector<size_t > prohibited_indexes;
 
@@ -133,55 +123,7 @@ protected:
         }
     }
 
-    /**
-     * recalculating the center of each cluster
-     */
-    virtual void recenter() {
-        for(int i = 0; i < K_; i++) {
-            size_t total_points_cluster = clusters_[i].getClusterSize();
-
-            for(int j = 0; j < dimension_; j++) {
-
-                DataType sum = 0.0;
-
-                if(total_points_cluster > 0) {
-
-                    for(int p = 0; p < total_points_cluster; p++) {
-                        sum += clusters_[i].getPoint(p).getValue(j);
-                    }
-                    clusters_[i].setCentralValue(j, sum / total_points_cluster);
-                }
-            }
-        }
-    }
-
-    /**
-     * re allocate each point to its nearest cluster center.
-     * @param points
-     * @return true if no action performed
-     */
-    virtual bool associate(vector<Point<DataType > > & points) {
-        bool done = true;
-
-        // associates each point to the nearest center
-        for(int i = 0; i < num_points_; i++) {
-            int id_old_cluster = points[i].getCluster();
-            int id_nearest_center = getIDNearestCenter(points[i]);
-
-            if(id_old_cluster != id_nearest_center) {
-
-                if(id_old_cluster != DEFAULT_CLUSTER_ID) {
-                    clusters_[id_old_cluster].removePoint(points[i].getID());
-                }
-
-                points[i].setCluster(id_nearest_center);
-                clusters_[id_nearest_center].addPoint(points[i]);
-                done = false;
-            }
-        }
-
-        return done;
-    }
+private:
 
     /**
      * shows elements of clusters
