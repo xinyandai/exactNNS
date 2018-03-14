@@ -137,6 +137,10 @@ public:
         return points_[index];
     }
 
+    const vector<Point<DataType > >& getPoints() const {
+        return points_;
+    }
+
     size_t getClusterSize() const {
         return points_.size();
     }
