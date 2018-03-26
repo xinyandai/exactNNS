@@ -24,7 +24,7 @@ int execute(const string& dataFile, const string& queryFile) {
     int topK = 10;
     size_t max_iteration = 500;
 
-    ExactNNS<DataType, KBalls<DataType>>(data, query, num_codebook, clusterK, topK, max_iteration);
+    ExactNNS<DataType, KBalls<DataType> >(data, query, metric::euclidDistance<DataType>, num_codebook, clusterK, topK, max_iteration);
 
 }
 
