@@ -2,6 +2,7 @@
 
 
 #include "include/exactnns.h"
+#include "include/kmeans/kmeans_radius.h"
 
 
 using namespace std;
@@ -18,12 +19,12 @@ int execute(const string& dataFile, const string& queryFile) {
     lshbox::loadFvecs(query, queryFile);
 
 
-    size_t num_codebook = 4;
+    size_t num_codebook = 2;
     size_t clusterK = 30;
     int topK = 10;
     size_t max_iteration = 500;
 
-    ExactNNS<DataType>(data, query, num_codebook, clusterK, topK, max_iteration);
+    ExactNNS<DataType, KBalls<DataType>>(data, query, num_codebook, clusterK, topK, max_iteration);
 
 }
 

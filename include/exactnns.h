@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "util.h"
-#include "kmeans/kmeans.h"
+#include "kmeans/kmeans_abstract.h"
 #include "metric.h"
 #include "imisequence.h"
 
@@ -20,7 +20,7 @@
  * sub-KMeans: multiple sub-KMeans consist of one PQ by merging(joining)
  * @tparam DataType
  */
-template <typename DataType>
+template <typename DataType, typename KMeansType>
 class ExactNNS {
 public:
     /**
@@ -43,7 +43,8 @@ public:
               topK_(topK),
               upper_bound_log_("logs/log_upper_bound_.log"),
               lower_bound_log_("logs/log_lower_bound_.log"),
-              percent_log_("logs/log_percent_.log"){
+              percent_log_("logs/log_percent_.log") {
+
         // 1. calculate dimension in each code book
         calculateCodeBook();
         // 2. pre process
@@ -113,7 +114,7 @@ protected:
     /**
      * build multi index for each sub-code-book with sub-KMeans
      */
-    void buildIndex() ;
+    virtual void buildIndex() ;
 
     /**
      * join cluster for all combinations in all code book.
@@ -140,10 +141,11 @@ protected:
      * value: merged(joined) cluster.
      */
     std::unordered_map<unsigned long ,  Cluster<DataType> > tables;
+
     /**
      * sub-KMeans collection for all code books.
      */
-    vector<KMeans<DataType> > kMeans;
+    vector<KMeansType > kMeans;
 
     /**
      * result is save in max heaps according to the distance from each query point to each retrieved data.
@@ -156,6 +158,7 @@ protected:
     vector<vector<Point<DataType > > > points;
 
     size_t num_codebook_ ;
+
     /**
      * number of clusters in each sub-KMeans
      */
@@ -170,6 +173,7 @@ protected:
      * the last code book is no larger than codebook_subdim_max(=data_.getDim()/num_codebook_)
      */
     size_t codebook_subdim_max;
+
     /**
      * all dimensions
      */
@@ -177,16 +181,16 @@ protected:
 };
 
 
-template <typename DataType>
-void ExactNNS<DataType>::preProcess() {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::preProcess() {
     // 2.1 mean
     // 2.2 eigen allocate or optimized product quantization
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::writeResult() {
-    string lshboxBenchFileName = "nn.lshbox";
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::writeResult() {
+    string lshboxBenchFileName = "logs/nn.lshbox";
     // lshbox file
     ofstream lshboxFout(lshboxBenchFileName);
     if (!lshboxFout) {
@@ -215,15 +219,15 @@ void ExactNNS<DataType>::writeResult() {
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::calculateQueryCenterDist(DataType* queryPoint, vector<vector<pair<size_t , DataType> > >& distToClusters) {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::calculateQueryCenterDist(DataType* queryPoint, vector<vector<pair<size_t , DataType> > >& distToClusters) {
     for (int codeBookID = 0; codeBookID < num_codebook_; ++codeBookID) {
         distToClusters[codeBookID].reserve(codebook_subdimension[codeBookID]);
     }
 
     for (int codeBookID = 0; codeBookID < num_codebook_; ++codeBookID) {
 
-        KMeans<DataType>& means = kMeans[codeBookID];
+        KMeansType& means = kMeans[codeBookID];
         vector<pair<size_t , DataType> >& dists = distToClusters[codeBookID];
 
         for (int clusterId = 0; clusterId < means.getClusters().size(); ++clusterId) {
@@ -262,8 +266,8 @@ void ExactNNS<DataType>::calculateQueryCenterDist(DataType* queryPoint, vector<v
  * @param upperBound  will be update
  * @param lowerBound will be update
  */
-template <typename DataType>
-void inline ExactNNS<DataType>::probeOneBucket(IMISequence& imiSequence,
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::probeOneBucket(IMISequence& imiSequence,
                                    vector<vector<pair<size_t , DataType> > > & distToClusters,
                                    priority_queue<DistDataMax<int > >& maxHeap,
                                    DataType* queryPoint,
@@ -302,8 +306,8 @@ void inline ExactNNS<DataType>::probeOneBucket(IMISequence& imiSequence,
 }
 
 
-template <typename DataType>
-long double ExactNNS<DataType>::searchOnePoint(DataType* queryPoint, priority_queue<DistDataMax<int > >& maxHeap) {
+template <typename DataType, typename KMeansType>
+long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint, priority_queue<DistDataMax<int > >& maxHeap) {
 
     // (cluster_id, distance) from query to cluster center for each codebook and each center in each codebook
     vector<vector<pair<size_t , DataType> > > distToClusters(num_codebook_);
@@ -325,7 +329,7 @@ long double ExactNNS<DataType>::searchOnePoint(DataType* queryPoint, priority_qu
 
     long double upperBound = std::numeric_limits<long double>::max();
     long double lowerBound = - std::numeric_limits<long double>::max();
-    //
+
     maxHeap.push( DistDataMax<int >(std::numeric_limits<DataType>::max(), 0 ) );
 
     int bucketNum;
@@ -335,7 +339,6 @@ long double ExactNNS<DataType>::searchOnePoint(DataType* queryPoint, priority_qu
         upper_bound_log_ << upperBound << "\t";
         lower_bound_log_ << lowerBound << "\t";
     }
-
     upper_bound_log_  << "\n";
     lower_bound_log_  << "\n";
 
@@ -343,8 +346,8 @@ long double ExactNNS<DataType>::searchOnePoint(DataType* queryPoint, priority_qu
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::search() {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::search() {
     // insert n empty
     maxHeaps.insert(maxHeaps.end(), query_.getSize(), priority_queue<DistDataMax<int > > ());
 
@@ -363,15 +366,15 @@ void ExactNNS<DataType>::search() {
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::buildIndex() {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::buildIndex() {
 
     kMeans.reserve(num_codebook_);
 
     // initialize sub-KMeans
     for (int i = 0; i < num_codebook_; ++i) {
 
-        kMeans.push_back( KMeans<DataType> (clusterK_, (size_t)data_.getSize(), codebook_subdimension[i], max_iterations_, metric::euclidDistance<DataType>) );
+        kMeans.push_back( KMeansType (clusterK_, (size_t)data_.getSize(), codebook_subdimension[i], max_iterations_, metric::euclidDistance<DataType>) );
     }
 
     // wrap point for each sub-KMeans
@@ -389,7 +392,7 @@ void ExactNNS<DataType>::buildIndex() {
 
     // building indexes
     for (int i = 0; i < num_codebook_; ++i) {
-        KMeans<DataType>& means = kMeans[i];
+        KMeansType& means = kMeans[i];
         // run KMeans
         means.run(points[i]);
     }
@@ -397,30 +400,22 @@ void ExactNNS<DataType>::buildIndex() {
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::productJoinClusters() {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::productJoinClusters() {
 
     /**
      *  join function for two code book.
      */
     std::function<void (int, const Cluster<DataType>& )> mergeRecursive;
 
-    /**
-     * join function.
-     */
     mergeRecursive = [&] (int codebook_index, const Cluster<DataType>& cluster) {
 
         if (codebook_index == num_codebook_) {
-            // joined with "num_codebook_" clusters, put into tables because this is one kind of valid combination
-            // cluster.getID() = cluster[0] * clusterK_^(num_codebook_-1)
-            //                 + cluster[1] * clusterK_^(num_codebook_-2)
-            //                 ...
-            //                 + cluster[num_codebook_-1]
-            tables.emplace(std::make_pair(cluster.getID(), cluster));
 
+            tables.emplace(std::make_pair(cluster.getID(), cluster));
         } else {
 
-            KMeans<DataType>& subKMeans = kMeans[codebook_index];
+            KMeansType& subKMeans = kMeans[codebook_index];
             for (int i = 0; i < clusterK_; ++i) {
                 // joined with the codebook_index'th code book
                 Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], clusterK_ );
@@ -431,7 +426,7 @@ void ExactNNS<DataType>::productJoinClusters() {
     };
 
     // start with kMeans[0]
-    KMeans<DataType>& subKMeans = kMeans[0];
+    KMeansType& subKMeans = kMeans[0];
 
     for (int i = 0; i < subKMeans.getClusters().size(); ++i) {
 
@@ -444,12 +439,14 @@ void ExactNNS<DataType>::productJoinClusters() {
 }
 
 
-template <typename DataType>
-void ExactNNS<DataType>::calculateCodeBook() {
+template <typename DataType, typename KMeansType>
+void ExactNNS<DataType, KMeansType>::calculateCodeBook() {
 
     codebook_subdim_max = data_.getDim() / num_codebook_;
     codebook_subdimension.insert(codebook_subdimension.end(), num_codebook_, codebook_subdim_max);
+
     if (data_.getDim() % num_codebook_) {
+
         codebook_subdimension[num_codebook_-1] = data_.getDim() % num_codebook_;
     }
 }
