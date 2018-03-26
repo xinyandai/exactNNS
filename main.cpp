@@ -18,8 +18,8 @@ int execute(const string& dataFile, const string& queryFile) {
     lshbox::loadFvecs(query, queryFile);
 
 
-    size_t num_codebook = 2;
-    size_t clusterK = 32;
+    size_t num_codebook = 4;
+    size_t clusterK = 30;
     int topK = 10;
     size_t max_iteration = 500;
 

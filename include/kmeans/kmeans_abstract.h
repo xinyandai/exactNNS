@@ -172,6 +172,21 @@ private:
 
         }
         cout << "\n";
+        cout << "Radius : ";
+
+        for (int j = 0; j < clusters_.size(); ++j) {
+            Cluster<DataType>& cluster = clusters_[j];
+            cout << cluster.getRadius() << " \t";
+        }
+        cout << endl;
+
+        cout << "Size : ";
+
+        for (int j = 0; j < clusters_.size(); ++j) {
+            Cluster<DataType>& cluster = clusters_[j];
+            cout << cluster.getClusterSize() << " \t";
+        }
+        cout << endl;
     }
 
 };
