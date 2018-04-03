@@ -1,5 +1,7 @@
 Exact Nearest Neighbor Search
 =============================
+[![Build Status](https://travis-ci.org/xinyandai/exactNNS.svg?branch=master)](https://travis-ci.org/xinyandai/exactNNS)
+
 
 ## Algorithm Description
 1. build indexes for buckets with PQ
