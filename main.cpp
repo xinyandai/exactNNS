@@ -1,40 +1,50 @@
 #include <iostream>
 
 
-#include "include/exactnns.h"
-#include "include/kmeans/kmeans_radius.h"
-
+#include "include/search.h"
 
 using namespace std;
 
 
-template <typename DataType>
-int execute(const string& dataFile, const string& queryFile) {
 
-    lshbox::Matrix<DataType> data;
-    lshbox::Matrix<DataType> query;
+int main(int argc, const char **argv) {
 
+    //TODO parameters should be encapsulated in one struct
 
-    lshbox::loadFvecs(data, dataFile);
-    lshbox::loadFvecs(query, queryFile);
-
-
+    // set default parameters value for testing
+    string baseFile = "/home/xinyan/programs/gqr/data/audio/audio_base.fvecs";
+    string queryFile = "/home/xinyan/programs/gqr/data/audio/audio_query.fvecs";
     size_t num_codebook = 2;
     size_t clusterK = 30;
     int topK = 10;
     size_t max_iteration = 500;
 
-    ExactNNS<DataType, KBalls<DataType> >(data, query, metric::euclidDistance<DataType>, num_codebook, clusterK, topK, max_iteration);
+    //use parameters
+    unordered_map<string, string> params = lshbox::parseParams(argc, argv);
 
-}
+    if (params.size() < 7)
+    {
+        std::cerr << "Usage: "
+                  << "./exactNNS   "
+                  << "--base_file=xxx "
+                  << "--query_file=xxx "
+                  << "--num_codebook=xxx"
+                  << "--clusterK=xxx"
+                  << "--topK=xxx"
+                  << "--max_iteration=xxx"
+                  << std::endl;
 
+    } else {
+        baseFile = params["base_file"];
+        queryFile = params["query_file"];
 
-int main(int argc, char *argv[]) {
+        num_codebook = stoul(params["num_codebook"]);
+        clusterK = stoul(params["clusterK"]);
+        topK = stoi(params["topK"]);
+        max_iteration = stoul(params["base_file"]);
+    }
 
-    string dataFile = "/home/xinyan/programs/gqr/data/audio/audio_base.fvecs";
-    string queryFile = "/home/xinyan/programs/gqr/data/audio/audio_query.fvecs";
-
-    execute<float >(dataFile, queryFile);
+    execute<float >(baseFile, queryFile, num_codebook, clusterK, topK , max_iteration);
 
     return 0;
 }
