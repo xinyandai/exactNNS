@@ -14,6 +14,7 @@
 #include "kmeans/kmeans_abstract.h"
 #include "metric.h"
 #include "imisequence.h"
+#include "PQ/PQ.h"
 
 /**
  * PQ: product quatization
@@ -21,7 +22,7 @@
  * @tparam DataType
  */
 template <typename DataType, typename KMeansType>
-class ExactNNS {
+class ExactNNS : public ProductQuantization {
 public:
     /**
      *
@@ -36,26 +37,14 @@ public:
              lshbox::Matrix<DataType>& query,
              std::function< DataType (const DataType*, const DataType*, size_t) > cluster_dist,
              size_t num_codebook, size_t clusterK, int topK, size_t max_iteration)
-            : data_(data),
+            : ProductQuantization(data, query, cluster_dist, num_codebook, clusterK, max_iteration),
+              data_(data),
               query_(query),
-              num_codebook_(num_codebook),
-              cluster_dist_(cluster_dist),
-              clusterK_(clusterK),
-              max_iterations_(max_iteration),
               topK_(topK),
               upper_bound_log_("logs/log_upper_bound_.log"),
               lower_bound_log_("logs/log_lower_bound_.log"),
               percent_log_("logs/log_percent_.log") {
 
-        // 1. calculate dimension in each code book
-        calculateCodeBook();
-        // 2. pre process
-        preProcess();
-        // 3. build indexes with PQ
-        // 2-dimension code, which means size of product quantization = 2
-        buildIndex();
-        // 4. merge sub-clusters
-        productJoinClusters();
         //query
         search();
         // write result
@@ -68,8 +57,6 @@ public:
         percent_log_.close();
     }
 protected:
-    // TODO
-    void preProcess() ;
 
     /**
      * write topK result into text file
@@ -113,86 +100,24 @@ protected:
      */
     void search() ;
 
-    /**
-     * build multi index for each sub-code-book with sub-KMeans
-     */
-    virtual void buildIndex() ;
-
-    /**
-     * join cluster for all combinations in all code book.
-     *
-     */
-    void productJoinClusters();
-
-    /**
-     * calculate dimension of each code book
-     */
-    void calculateCodeBook();
-
-
 protected:
+
     lshbox::Matrix<DataType>& data_;
     lshbox::Matrix<DataType>& query_;
+
     ofstream upper_bound_log_;
     ofstream lower_bound_log_;
     ofstream percent_log_;
 
-    /**
-     * key value table.
-     * key: merged(joined) cluster id.
-     * value: merged(joined) cluster.
-     */
-    std::unordered_map<unsigned long ,  Cluster<DataType> > tables_;
-
-    /**
-     * distance function for KMeans
-     */
-    std::function<DataType (const DataType*, const DataType*, size_t) > cluster_dist_;
-
-    /**
-     * sub-KMeans collection for all code books.
-     */
-    vector<KMeansType > kMeans_;
-
-    /**
-     * result is save in max heaps according to the distance from each query point to each retrieved data.
-     */
+    /***result is save in max heaps according to the distance from each query point to each retrieved data.**/
     vector<priority_queue<DistDataMax<int > > > maxHeaps_;
-
-    /**
-     * wrapped points for kMeans.
-     */
-    vector<vector<Point<DataType > > > points_;
-
-    size_t num_codebook_ ;
-
-    /**
-     * number of clusters in each sub-KMeans
-     */
-    size_t clusterK_ ;
-
-    size_t max_iterations_;
 
     int topK_;
 
-    /**
-     * default dimension of code book except the last code book.
-     * the last code book is no larger than codebook_subdim_max(=data_.getDim()/num_codebook_)
-     */
-    size_t codebook_subdim_max;
 
-    /**
-     * all dimensions
-     */
-    vector<size_t > codebook_subdimension;
 };
 
 
-template <typename DataType, typename KMeansType>
-void ExactNNS<DataType, KMeansType>::preProcess() {
-    // 2.1 mean
-    // 2.2 eigen allocate or optimized product quantization
-}
 
 
 template <typename DataType, typename KMeansType>
@@ -316,7 +241,8 @@ void ExactNNS<DataType, KMeansType>::probeOneBucket(IMISequence& imiSequence,
 template <typename DataType, typename KMeansType>
 long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint, priority_queue<DistDataMax<int > >& maxHeap) {
 
-    // (cluster_id, distance) from query to cluster center for each codebook and each center in each codebook
+    // (cluster_id, distance) from query to cluster center for each codebook
+    // and each center in each codebook
     vector<vector<pair<size_t , DataType> > > distToClusters(num_codebook_);
     calculateQueryCenterDist(queryPoint, distToClusters);
 
@@ -355,7 +281,7 @@ long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint,
 
 template <typename DataType, typename KMeansType>
 void ExactNNS<DataType, KMeansType>::search() {
-    // insert n empty
+    // insert n empty queue
     maxHeaps_.insert(maxHeaps_.end(), query_.getSize(), priority_queue<DistDataMax<int > > ());
 
     long double average_percent = 0.0;
@@ -370,91 +296,5 @@ void ExactNNS<DataType, KMeansType>::search() {
 
     percent_log_ << "average\t : \t" << average_percent / query_.getSize() << std::endl;
 
-}
-
-
-template <typename DataType, typename KMeansType>
-void ExactNNS<DataType, KMeansType>::buildIndex() {
-
-    kMeans_.reserve(num_codebook_);
-
-    // initialize sub-KMeans
-    for (int i = 0; i < num_codebook_; ++i) {
-
-        kMeans_.push_back( KMeansType (clusterK_, (size_t)data_.getSize(), codebook_subdimension[i], max_iterations_, cluster_dist_) );
-    }
-
-    // wrap point for each sub-KMeans
-    for (int code_book_index = 0; code_book_index < num_codebook_; ++code_book_index) {
-
-        vector<Point<DataType> > subPoints;
-        subPoints.reserve((size_t)data_.getSize());
-
-        for (int point_id = 0; point_id < data_.getSize(); ++point_id) {
-
-            subPoints.push_back(Point<DataType>(point_id, & data_[point_id][code_book_index * codebook_subdim_max]));
-        }
-        points_.push_back(subPoints);
-    }
-
-    // building indexes
-    for (int i = 0; i < num_codebook_; ++i) {
-        KMeansType& means = kMeans_[i];
-        // run KMeans
-        means.run(points_[i]);
-    }
-
-}
-
-
-template <typename DataType, typename KMeansType>
-void ExactNNS<DataType, KMeansType>::productJoinClusters() {
-
-    /**
-     *  join function for two code book.
-     */
-    std::function<void (int, const Cluster<DataType>& )> mergeRecursive;
-
-    mergeRecursive = [&] (int codebook_index, const Cluster<DataType>& cluster) {
-
-        if (codebook_index == num_codebook_) {
-
-            tables_.emplace(std::make_pair(cluster.getID(), cluster));
-        } else {
-
-            KMeansType& subKMeans = kMeans_[codebook_index];
-            for (int i = 0; i < clusterK_; ++i) {
-                // joined with the codebook_index'th code book
-                Cluster<DataType> mergedCluster = cluster.merge( subKMeans.getClusters()[i], clusterK_ );
-                // then joined with the (codebook_index+1)'th code book
-                mergeRecursive(codebook_index+1, mergedCluster );
-            }
-        }
-    };
-
-    // start with kMeans[0]
-    KMeansType& subKMeans = kMeans_[0];
-
-    for (int i = 0; i < subKMeans.getClusters().size(); ++i) {
-
-        // initialize cluster with al clusters in kMeans[0],
-        const Cluster<DataType>& initialCluster =  subKMeans.getClusters()[i];
-        // then merge clusters in kMeans[1], then merge cluster in kMeans[2] ....
-        mergeRecursive(1, initialCluster );
-    }
-
-}
-
-
-template <typename DataType, typename KMeansType>
-void ExactNNS<DataType, KMeansType>::calculateCodeBook() {
-
-    codebook_subdim_max = data_.getDim() / num_codebook_;
-    codebook_subdimension.insert(codebook_subdimension.end(), num_codebook_, codebook_subdim_max);
-
-    if (data_.getDim() % num_codebook_) {
-
-        codebook_subdimension[num_codebook_-1] = data_.getDim() % num_codebook_;
-    }
 }
 
