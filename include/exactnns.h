@@ -10,10 +10,10 @@
 #include <queue>
 #include <unordered_map>
 
-#include "util.h"
+#include "common/util.h"
 #include "kmeans/kmeans_abstract.h"
-#include "metric.h"
-#include "imisequence.h"
+#include "common/metric.h"
+#include "imi/imisequence.h"
 #include "PQ/PQ.h"
 
 /**
