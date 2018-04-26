@@ -59,29 +59,21 @@ public:
         productJoinClusters();
     }
 
-    virtual ~ ExactNNS() {
-    }
+    size_t getClusterK() { return clusterK_ ; }
+    size_t getNumCodebook() { return num_codebook_ ; }
+    vector<size_t> getCodebookSubDimensions() { return codebook_subdimension; }  
+    std::unordered_map<unsigned long ,  Cluster<DataType> >   & getTables() { return tables_;  } 
+    vector<KMeansType > & getKMeans() { return kMeans_; }
 
 protected:
     // TODO
     virtual void preProcess() ;
-
-    /**
-     * build multi index for each sub-code-book with sub-KMeans
-     */
+    /*** build multi index for each sub-code-book with sub-KMeans **/
     virtual void buildIndex() ;
-
-    /**
-     * join cluster for all combinations in all code book.
-     *
-     */
+    /*** join cluster for all combinations in all code book**/
     void productJoinClusters();
-
-    /**
-     * calculate dimension of each code book
-     */
+    /*** calculate dimension of each code book **/
     void calculateCodeBook();
-
 
 protected:
     lshbox::Matrix<DataType>& data_;
@@ -95,22 +87,18 @@ protected:
     std::function<DataType (const DataType*, const DataType*, size_t) > cluster_dist_;
     /***sub-KMeans collection for all code books.**/
     vector<KMeansType > kMeans_;
-
     /***wrapped points used by kMeans.**/
     vector<vector<Point<DataType > > > points_;
 
     size_t num_codebook_ ;
     /***number of clusters in each sub-KMeans**/
     size_t clusterK_ ;
-
     size_t max_iterations_;
-
     /**
      * default dimension of code book except the last code book.
      * the last code book is no larger than codebook_subdim_max(=data_.getDim()/num_codebook_)
      */
     size_t codebook_subdim_max;
-
     /***all dimensions**/
     vector<size_t > codebook_subdimension;
 };

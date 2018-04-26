@@ -22,7 +22,7 @@
  * @tparam DataType
  */
 template <typename DataType, typename KMeansType>
-class ExactNNS : public ProductQuantization {
+class ExactNNS  {
 public:
     /**
      *
@@ -37,7 +37,7 @@ public:
              lshbox::Matrix<DataType>& query,
              std::function< DataType (const DataType*, const DataType*, size_t) > cluster_dist,
              size_t num_codebook, size_t clusterK, int topK, size_t max_iteration)
-            : ProductQuantization(data, query, cluster_dist, num_codebook, clusterK, max_iteration),
+            : pq(data, query, cluster_dist, num_codebook, clusterK, max_iteration),
               data_(data),
               query_(query),
               topK_(topK),
@@ -102,6 +102,7 @@ protected:
 
 protected:
 
+    ProductQuantization<DataType, KMeansType > pq;
     lshbox::Matrix<DataType>& data_;
     lshbox::Matrix<DataType>& query_;
 
@@ -153,21 +154,23 @@ void ExactNNS<DataType, KMeansType>::writeResult() {
 
 template <typename DataType, typename KMeansType>
 void ExactNNS<DataType, KMeansType>::calculateQueryCenterDist(DataType* queryPoint, vector<vector<pair<size_t , DataType> > >& distToClusters) {
-    for (int codeBookID = 0; codeBookID < num_codebook_; ++codeBookID) {
-        distToClusters[codeBookID].reserve(codebook_subdimension[codeBookID]);
+
+    for (int codeBookID = 0; codeBookID < pq.getNumCodebook(); ++codeBookID) {
+        distToClusters[codeBookID].reserve(pq.getCodebookSubDimensions() [codeBookID]);
     }
 
-    for (int codeBookID = 0; codeBookID < num_codebook_; ++codeBookID) {
+    for (int codeBookID = 0; codeBookID < pq.getNumCodebook() ; ++codeBookID) {
 
+	auto & kMeans_ = pq.getKMeans();
         KMeansType& means = kMeans_[codeBookID];
         vector<pair<size_t , DataType> >& dists = distToClusters[codeBookID];
 
         for (int clusterId = 0; clusterId < means.getClusters().size(); ++clusterId) {
             const Cluster<DataType>& cluster = means.getClusters()[clusterId];
             DataType query_center = metric::euclidDistance(
-                    &queryPoint[codeBookID*codebook_subdim_max],
+                    &queryPoint[codeBookID*pq.getCodebookSubDimensions()[0]],
                     cluster.getCentralValues().data(),
-                    codebook_subdimension[codeBookID]
+                    pq.getCodebookSubDimensions()[codeBookID]
             );
             DataType radius = cluster.getRadius();
             DataType dist_lower_bound;
@@ -208,12 +211,13 @@ void ExactNNS<DataType, KMeansType>::probeOneBucket(IMISequence& imiSequence,
 
     auto next = imiSequence.next();
     unsigned long key = 0;
-    for (int codeBookIndex = 0; codeBookIndex < num_codebook_; ++codeBookIndex) {
+    for (int codeBookIndex = 0; codeBookIndex < pq.getNumCodebook(); ++codeBookIndex) {
         unsigned clusterID = next.second[codeBookIndex];
         pair<size_t , DataType>& dists = distToClusters[codeBookIndex][clusterID];
-        key = key * clusterK_ + dists.first;
+        key = key * pq.getClusterK() + dists.first;
     }
 
+    auto& tables_ = pq.getTables();
     if (tables_.find(key) == tables_.end()) {
         assert(false);
     }
@@ -243,14 +247,14 @@ long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint,
 
     // (cluster_id, distance) from query to cluster center for each codebook
     // and each center in each codebook
-    vector<vector<pair<size_t , DataType> > > distToClusters(num_codebook_);
+    vector<vector<pair<size_t , DataType> > > distToClusters(pq.getNumCodebook() );
     calculateQueryCenterDist(queryPoint, distToClusters);
 
     // lambda to get distance
     auto distor = [&](vector<unsigned > clusterIDS) {
 
         DataType dist_square = 0.0;
-        for (int codebookIndex = 0; codebookIndex < num_codebook_; ++codebookIndex) {
+        for (int codebookIndex = 0; codebookIndex < pq.getNumCodebook(); ++codebookIndex) {
 
             dist_square += distToClusters[codebookIndex][clusterIDS[codebookIndex]].second;
         }
@@ -258,7 +262,7 @@ long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint,
         return dist_square;
     };
 
-    IMISequence imiSequence(num_codebook_, vector<size_t >(num_codebook_, this->clusterK_), distor);
+    IMISequence imiSequence(pq.getNumCodebook(), vector<size_t >(pq.getNumCodebook(), pq.getClusterK() ), distor);
 
     long double upperBound = std::numeric_limits<long double>::max();
     long double lowerBound = - std::numeric_limits<long double>::max();
@@ -275,7 +279,7 @@ long double ExactNNS<DataType, KMeansType>::searchOnePoint(DataType* queryPoint,
     upper_bound_log_  << "\n";
     lower_bound_log_  << "\n";
 
-    return bucketNum / (long double)std::pow(clusterK_, num_codebook_);
+    return bucketNum / (long double)std::pow(pq.getClusterK(), pq.getNumCodebook() );
 }
 
 
